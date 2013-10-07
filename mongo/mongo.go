@@ -93,9 +93,9 @@ func Shutdown(goRoutine string) (err error) {
 //  password: The password for authentication
 func CreateSession(goRoutine string, host string, databaseName string, username string, password string) (err error) {
 
-	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "_MongoManager.CreateSession")
+	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "CreateSession")
 
-	tracelog.LogSystemf(goRoutine, _NAMESPACE, "_MongoManager.CreateSession", "Started : Host[%s] DatabaseName[%s] Username[%s] Password[%s]", host, databaseName, username, password)
+	tracelog.LogSystemf(goRoutine, _NAMESPACE, "CreateSession", "Started : Host[%s] DatabaseName[%s] Username[%s]", host, databaseName, username)
 
 	// Create the database object
 	mongoDatabase := &_MongoDatabase{
@@ -112,7 +112,7 @@ func CreateSession(goRoutine string, host string, databaseName string, username 
 	mongoDatabase.MongoSession, err = mgo.DialWithInfo(mongoDatabase.MongoDBDialInfo)
 	if err != nil {
 
-		tracelog.LogSystemf(goRoutine, _NAMESPACE, "_MongoManager.CreateSession", "ERROR : %s", err)
+		tracelog.LogSystemf(goRoutine, _NAMESPACE, "CreateSession", "ERROR : %s", err)
 		return
 	}
 
@@ -130,7 +130,7 @@ func CreateSession(goRoutine string, host string, databaseName string, username 
 	// Add the database to the map
 	_This.Databases[databaseName] = mongoDatabase
 
-	tracelog.LogSystem(goRoutine, _NAMESPACE, "_MongoManager.CreateSession", "Completed")
+	tracelog.LogSystem(goRoutine, _NAMESPACE, "CreateSession", "Completed")
 
 	return
 }
@@ -140,23 +140,23 @@ func CreateSession(goRoutine string, host string, databaseName string, username 
 //  databaseName: The name of the database to use
 func CopySession(goRoutine string, databaseName string) (mongoSession *mgo.Session, err error) {
 
-	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "_MongoManager.CopySession")
+	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "CopySession")
 
-	tracelog.LogSystemf(goRoutine, _NAMESPACE, "_MongoManager.CopySession", "Started : DatabaseName[%s]", databaseName)
+	tracelog.LogSystemf(goRoutine, _NAMESPACE, "CopySession", "Started : DatabaseName[%s]", databaseName)
 
 	// Find the database object
 	mongoDatabase := _This.Databases[databaseName]
 
 	if mongoDatabase == nil {
 
-		tracelog.LogSystemf(goRoutine, _NAMESPACE, "_MongoManager.CopySession", "Completed : ERROR : Unable To Locate Database %s", databaseName)
+		tracelog.LogSystemf(goRoutine, _NAMESPACE, "CopySession", "Completed : ERROR : Unable To Locate Database %s", databaseName)
 		return
 	}
 
 	// Copy the master session
 	mongoSession = mongoDatabase.MongoSession.Copy()
 
-	tracelog.LogSystem(goRoutine, _NAMESPACE, "_MongoManager.CopySession", "Completed")
+	tracelog.LogSystem(goRoutine, _NAMESPACE, "CopySession", "Completed")
 
 	return
 }
@@ -165,13 +165,13 @@ func CopySession(goRoutine string, databaseName string) (mongoSession *mgo.Sessi
 //  goRoutine: The name of the routine making the call
 func CloseSession(goRoutine string, mongoSession *mgo.Session) {
 
-	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "_MongoManager.CloseSession")
+	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "CloseSession")
 
-	tracelog.LogSystem(goRoutine, _NAMESPACE, "_MongoManager.CloseSession", "Started")
+	tracelog.LogSystem(goRoutine, _NAMESPACE, "CloseSession", "Started")
 
 	mongoSession.Close()
 
-	tracelog.LogSystem(goRoutine, _NAMESPACE, "_MongoManager.CloseSession", "Completed")
+	tracelog.LogSystem(goRoutine, _NAMESPACE, "CloseSession", "Completed")
 }
 
 // GetCollection returns a reference to a collection for the specified database and collection name
@@ -186,7 +186,7 @@ func GetCollection(goRoutine string, mongoSession *mgo.Session, databaseName str
 
 	if mongoDatabase == nil {
 
-		tracelog.LogSystemf(goRoutine, _NAMESPACE, "_MongoManager.GetCollection", "Completed : ERROR : Unable To Locate Database %s", databaseName)
+		tracelog.LogSystemf(goRoutine, _NAMESPACE, "GetCollection", "Completed : ERROR : Unable To Locate Database %s", databaseName)
 		return
 	}
 
