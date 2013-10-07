@@ -71,3 +71,31 @@ Content-Type: text/html; charset="UTF-8"
 
 <html><body>{{.Message}}</body></html>`
 }
+
+// SendProblemEmail sends an email with the slice of problems
+//  goRoutine The Go routine making the call
+//  namespace: The namespace the call is being made from
+//  subject: The subject line for the email
+//  problems: The slice of problems
+func SendProblemEmail(goRoutine string, namespace string, subject string, problems []string) (err error) {
+
+	defer CatchPanicSystem(&err, goRoutine, namespace, "SendProblemEmail")
+
+	tracelog.LogSystem(goRoutine, namespace, "SendProblemEmail", "Started")
+
+	// Create a buffer to build the message
+	message := new(bytes.Buffer)
+
+	// Build the message
+	for _, problem := range problems {
+
+		message.WriteString(fmt.Sprintf("%s<br />", problem))
+	}
+
+	// Send the email
+	SendEmail(goRoutine, namespace, subject, message.String())
+
+	tracelog.LogSystem(goRoutine, namespace, "SendProblemEmail", "Completed")
+
+	return err
+}

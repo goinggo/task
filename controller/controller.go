@@ -30,7 +30,7 @@ type _ControlManager struct {
 // Provides the functionality for the running application
 type Controller interface {
 	StrapEnv() (environment string, path string)
-	Run()
+	Run() (err error)
 }
 
 //** SINGLETON REFERENCE
@@ -42,7 +42,7 @@ var _This *_ControlManager
 
 // Run is the entry point for the controller
 //  userControl: A pointer to the users program logic
-func Run(userControl Controller) {
+func Run(userControl Controller) (osExit int) {
 
 	// Create the control manager
 	_This = &_ControlManager{
@@ -54,20 +54,21 @@ func Run(userControl Controller) {
 	if err := _This.Init(); err != nil {
 
 		tracelog.LogSystemAlertf(EmailAlertSubject, "main", _NAMESPACE, "Run", "%s", err)
-		return
+		return 1
 	}
 
 	// Run the program
-	if err := _This.Start(); err != nil {
-
-		tracelog.LogSystemAlertf(EmailAlertSubject, "main", _NAMESPACE, "Run", "%s", err)
-	}
+	err := _This.Start()
 
 	// Close the program
-	if err := _This.Close(); err != nil {
+	_This.Close()
 
-		tracelog.LogSystemAlertf(EmailAlertSubject, "main", _NAMESPACE, "Run", "%s", err)
+	// Did we error
+	if err != nil {
+		return 1
 	}
+
+	return 0
 }
 
 // IsShutdown returns the value of the shutdown flag
@@ -157,8 +158,8 @@ func (this *_ControlManager) Start() (err error) {
 
 			continue
 
-		case <-func() chan interface{} {
-			complete := make(chan interface{})
+		case err = <-func() chan error {
+			complete := make(chan error)
 			go this.LaunchProcessor(complete)
 			return complete
 		}():
@@ -189,19 +190,21 @@ func (this *_ControlManager) Close() (err error) {
 }
 
 // LaunchProcessor instanciates the specified inventory processor and runs the job
-//  complete: The channel to close when processing is complete
-func (this *_ControlManager) LaunchProcessor(complete chan interface{}) {
+//  complete: The channel to send result on when processing is complete
+func (this *_ControlManager) LaunchProcessor(complete chan error) {
 
 	tracelog.LogSystemf("launch", _NAMESPACE, "LaunchProcessor", "Started")
+
+	var err error
 
 	defer func() {
 
 		// Shutdown the program
-		close(complete)
+		complete <- err
 	}()
 
 	// Run the user code
-	this.UserControl.Run()
+	err = this.UserControl.Run()
 
 	tracelog.LogSystemf("launch", _NAMESPACE, "LaunchProcessor", "Completed")
 }
