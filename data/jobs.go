@@ -26,7 +26,7 @@ type JobDetail struct {
 type Job struct {
 	ObjectId  bson.ObjectId `bson:"_id"`
 	Type      string        `bson:"type"`
-	StartDate time.Time     `bson:"startDate"`
+	StartDate time.Time     `bson:"start_date"`
 	Details   []JobDetail   `bson:"details"`
 }
 
