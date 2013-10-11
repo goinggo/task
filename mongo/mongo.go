@@ -12,6 +12,7 @@ import (
 	"github.com/goinggo/utilities/straps"
 	"github.com/goinggo/utilities/tracelog"
 	"labix.org/v2/mgo"
+	"strings"
 	"time"
 )
 
@@ -58,8 +59,10 @@ func Startup(goRoutine string) (err error) {
 	tracelog.LogSystemf(goRoutine, _NAMESPACE, "Startup", "MongoDB : Database[%s]", straps.Strap("mgo_database"))
 	tracelog.LogSystemf(goRoutine, _NAMESPACE, "Startup", "MongoDB : Username[%s]", straps.Strap("mgo_username"))
 
+	hosts := strings.Split(straps.Strap("mgo_host"), ",")
+
 	// Create a database session for use
-	err = CreateSession(goRoutine, straps.Strap("mgo_host"), straps.Strap("mgo_database"), straps.Strap("mgo_username"), straps.Strap("mgo_password"))
+	err = CreateSession(goRoutine, hosts, straps.Strap("mgo_database"), straps.Strap("mgo_username"), straps.Strap("mgo_password"))
 
 	tracelog.LogSystem(goRoutine, _NAMESPACE, "Startup", "Completed")
 
@@ -91,16 +94,16 @@ func Shutdown(goRoutine string) (err error) {
 //  databaseName: The name of the database to use
 //  username: The user name for authentication
 //  password: The password for authentication
-func CreateSession(goRoutine string, host string, databaseName string, username string, password string) (err error) {
+func CreateSession(goRoutine string, hosts []string, databaseName string, username string, password string) (err error) {
 
 	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "CreateSession")
 
-	tracelog.LogSystemf(goRoutine, _NAMESPACE, "CreateSession", "Started : Host[%s] DatabaseName[%s] Username[%s]", host, databaseName, username)
+	tracelog.LogSystemf(goRoutine, _NAMESPACE, "CreateSession", "Started : Hosts[%s] DatabaseName[%s] Username[%s]", hosts, databaseName, username)
 
 	// Create the database object
 	mongoDatabase := &_MongoDatabase{
 		MongoDBDialInfo: &mgo.DialInfo{
-			Addrs:    []string{host},
+			Addrs:    hosts,
 			Timeout:  10 * time.Second,
 			Database: databaseName,
 			Username: username,
