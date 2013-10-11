@@ -119,9 +119,11 @@ func CreateSession(goRoutine string, host string, databaseName string, username 
 	// Reads and writes will always be made to the master server using a
 	// unique connection so that reads and writes are fully consistent,
 	// ordered, and observing the most up-to-date data.
+	// http://godoc.org/labix.org/v2/mgo#Session.SetMode
 	mongoDatabase.MongoSession.SetMode(mgo.Strong, true)
 
 	// Have the session check for errors
+	// http://godoc.org/labix.org/v2/mgo#Session.SetSafe
 	mongoDatabase.MongoSession.SetSafe(&mgo.Safe{})
 
 	// Don't want any longer than 10 second for an operation to complete
