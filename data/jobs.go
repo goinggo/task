@@ -32,12 +32,13 @@ type Job struct {
 
 // CleanJobs removes old jobs from the jobs table
 //  goRoutine: The name of the routine making the call
-//  databaseName: The name of the database to use
-func CleanJobs(goRoutine string, databaseName string) (err error) {
+//  useSession: The mongo session to use
+//  useDatabase: The name of the database to use
+func CleanJobs(goRoutine string, useSession string, useDatabase string) (err error) {
 
 	defer helper.CatchPanicSystem(&err, goRoutine, "data", "CleanJobs")
 
-	tracelog.LogSystemf(goRoutine, "data", "CleanJobs", "Started : DatabaseName[%s]", databaseName)
+	tracelog.LogSystemf(goRoutine, "data", "CleanJobs", "Started : UseSession[%s] UseDatabase[%s]", useSession, useDatabase)
 
 	// If it is between 12:00AM - 12:05AM remove old items
 	currentTime := time.Now().UTC()
@@ -47,7 +48,7 @@ func CleanJobs(goRoutine string, databaseName string) (err error) {
 		tracelog.LogSystemf(goRoutine, "data", "CleanJobs", "Info : Performing Clean Job : %v", currentTime)
 
 		// Grab a mongo session
-		mongoSession, err := mongo.CopySession(goRoutine, databaseName)
+		mongoSession, err := mongo.CopySession(goRoutine, useSession)
 
 		if err != nil {
 
@@ -58,7 +59,7 @@ func CleanJobs(goRoutine string, databaseName string) (err error) {
 		defer mongo.CloseSession(goRoutine, mongoSession)
 
 		// Access the jobs collection
-		collection, err := mongo.GetCollection(goRoutine, mongoSession, databaseName, "jobs")
+		collection, err := mongo.GetCollection(goRoutine, mongoSession, useDatabase, "jobs")
 
 		if err != nil {
 
@@ -83,16 +84,17 @@ func CleanJobs(goRoutine string, databaseName string) (err error) {
 
 // StartJob inserts a new job record into mongodb
 //  goRoutine: The name of the routine making the call
-//  databaseName: The name of the database to use
+//  useSession: The database used to create the session
+//  useDatabase: The name of the database to use
 //  jobType: The type of job being started
-func StartJob(goRoutine string, databaseName string, jobType string) (job *Job, err error) {
+func StartJob(goRoutine string, useSession string, useDatabase string, jobType string) (job *Job, err error) {
 
 	defer helper.CatchPanicSystem(&err, goRoutine, "data", "StartJob")
 
-	tracelog.LogSystemf(goRoutine, "data", "StartJob", "Started : DatabaseName[%s] JobType[%s]", databaseName, jobType)
+	tracelog.LogSystemf(goRoutine, "data", "StartJob", "Started : UseSession[%s] UseDatabase[%s] JobType[%s]", useSession, useDatabase, jobType)
 
 	// Grab a mongo session
-	mongoSession, err := mongo.CopySession(goRoutine, databaseName)
+	mongoSession, err := mongo.CopySession(goRoutine, useSession)
 
 	if err != nil {
 
@@ -103,7 +105,7 @@ func StartJob(goRoutine string, databaseName string, jobType string) (job *Job, 
 	defer mongo.CloseSession(goRoutine, mongoSession)
 
 	// Access the jobs collection
-	collection, err := mongo.GetCollection(goRoutine, mongoSession, databaseName, JOBS_COLLECTION)
+	collection, err := mongo.GetCollection(goRoutine, mongoSession, useDatabase, JOBS_COLLECTION)
 
 	if err != nil {
 
@@ -132,17 +134,18 @@ func StartJob(goRoutine string, databaseName string, jobType string) (job *Job, 
 
 // EndJob updates the specified job document with end date and status
 //  goRoutine: The name of the routine making the call
-//  databaseName: The name of the database to use
+//  useSession: The database used to create the session
+//  useDatabase: The name of the database to use
 //  result: A message about the disposition of the job
 //  job: The job to end
-func EndJob(goRoutine string, databaseName string, result string, job *Job) (err error) {
+func EndJob(goRoutine string, useSession string, useDatabase string, result string, job *Job) (err error) {
 
 	defer helper.CatchPanicSystem(&err, goRoutine, "data", "EndJob")
 
-	tracelog.LogSystemf(goRoutine, "data", "EndJob", "Started : DatabaseName[%s] Id[%v] Result[%s]", databaseName, job.ObjectId, result)
+	tracelog.LogSystemf(goRoutine, "data", "EndJob", "Started : UseSession[%s] UseDatabase[%s] Id[%v] Result[%s]", useSession, useDatabase, job.ObjectId, result)
 
 	// Grab a mongo session
-	mongoSession, err := mongo.CopySession(goRoutine, databaseName)
+	mongoSession, err := mongo.CopySession(goRoutine, useSession)
 
 	if err != nil {
 
@@ -153,7 +156,7 @@ func EndJob(goRoutine string, databaseName string, result string, job *Job) (err
 	defer mongo.CloseSession(goRoutine, mongoSession)
 
 	// Access the jobs collection
-	collection, err := mongo.GetCollection(goRoutine, mongoSession, databaseName, JOBS_COLLECTION)
+	collection, err := mongo.GetCollection(goRoutine, mongoSession, useDatabase, JOBS_COLLECTION)
 
 	if err != nil {
 
@@ -180,18 +183,19 @@ func EndJob(goRoutine string, databaseName string, result string, job *Job) (err
 
 // AddJobDetail writes a job detail record to the specifed job
 //  goRoutine: The name of the routine making the call
-//  databaseName: The name of the database to use
+//  useSession: The database used to create the session
+//  useDatabase: The name of the database to use
 //  job: The job to update
 //  task: The task being performed
 //  details: The details around the task
-func AddJobDetail(goRoutine string, databaseName string, job *Job, task string, details string) (err error) {
+func AddJobDetail(goRoutine string, useSession string, useDatabase string, job *Job, task string, details string) (err error) {
 
 	defer helper.CatchPanicSystem(&err, goRoutine, "data", "AddJobDetail")
 
-	tracelog.LogSystemf(goRoutine, "data", "AddJobDetail", "Started : DatabaseName[%s] Id[%v] Task[%v] Details[%s]", databaseName, job.ObjectId, task, details)
+	tracelog.LogSystemf(goRoutine, "data", "AddJobDetail", "Started : UseSession[%s] UseDatabase[%s] Id[%v] Task[%v] Details[%s]", useSession, useDatabase, job.ObjectId, task, details)
 
 	// Grab a mongo session
-	mongoSession, err := mongo.CopySession(goRoutine, databaseName)
+	mongoSession, err := mongo.CopySession(goRoutine, useSession)
 
 	if err != nil {
 
@@ -202,7 +206,7 @@ func AddJobDetail(goRoutine string, databaseName string, job *Job, task string, 
 	defer mongo.CloseSession(goRoutine, mongoSession)
 
 	// Access the jobs collection
-	collection, err := mongo.GetCollection(goRoutine, mongoSession, databaseName, JOBS_COLLECTION)
+	collection, err := mongo.GetCollection(goRoutine, mongoSession, useDatabase, JOBS_COLLECTION)
 
 	if err != nil {
 

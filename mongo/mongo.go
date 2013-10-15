@@ -20,19 +20,20 @@ import (
 
 // Constants
 const (
-	_NAMESPACE = "mongo"
+	_NAMESPACE     = "mongo"
+	MASTER_SESSION = "master"
 )
 
 //** NEW TYPES
 
-type _MongoDatabase struct {
+type _MongoSession struct {
 	MongoDBDialInfo *mgo.DialInfo // The connection information
 	MongoSession    *mgo.Session  // A master connection
 }
 
 // _MongoManager manages a connection and session
 type _MongoManager struct {
-	Databases map[string]*_MongoDatabase // Map of available databases
+	Sessions map[string]*_MongoSession // Map of available sessions
 }
 
 //** SINGLETON REFERENCE
@@ -51,7 +52,7 @@ func Startup(goRoutine string) (err error) {
 
 	// Create the Mongo Manager
 	_This = &_MongoManager{
-		Databases: map[string]*_MongoDatabase{},
+		Sessions: map[string]*_MongoSession{},
 	}
 
 	// Log the mongodb connection straps
@@ -61,8 +62,8 @@ func Startup(goRoutine string) (err error) {
 
 	hosts := strings.Split(straps.Strap("mgo_host"), ",")
 
-	// Create a database session for use
-	err = CreateSession(goRoutine, hosts, straps.Strap("mgo_database"), straps.Strap("mgo_username"), straps.Strap("mgo_password"))
+	// Create the master session
+	err = CreateSession(goRoutine, MASTER_SESSION, hosts, straps.Strap("mgo_database"), straps.Strap("mgo_username"), straps.Strap("mgo_password"))
 
 	tracelog.LogSystem(goRoutine, _NAMESPACE, "Startup", "Completed")
 
@@ -78,9 +79,9 @@ func Shutdown(goRoutine string) (err error) {
 	tracelog.LogSystem(goRoutine, _NAMESPACE, "Shutdown", "Started")
 
 	// Close the databases
-	for _, database := range _This.Databases {
+	for _, session := range _This.Sessions {
 
-		CloseSession(goRoutine, database.MongoSession)
+		CloseSession(goRoutine, session.MongoSession)
 	}
 
 	tracelog.LogSystem(goRoutine, _NAMESPACE, "Shutdown", "Completed")
@@ -90,18 +91,19 @@ func Shutdown(goRoutine string) (err error) {
 
 // CreateSession creates a connection pool for use
 //  goRoutine: The name of the routine making the call
+//  sessionName: A unique name for the session
 //  host: The host and port to connect to
 //  databaseName: The name of the database to use
 //  username: The user name for authentication
 //  password: The password for authentication
-func CreateSession(goRoutine string, hosts []string, databaseName string, username string, password string) (err error) {
+func CreateSession(goRoutine string, sessionName string, hosts []string, databaseName string, username string, password string) (err error) {
 
 	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "CreateSession")
 
-	tracelog.LogSystemf(goRoutine, _NAMESPACE, "CreateSession", "Started : Hosts[%s] DatabaseName[%s] Username[%s]", hosts, databaseName, username)
+	tracelog.LogSystemf(goRoutine, _NAMESPACE, "CreateSession", "Started : SessionName[%s] Hosts[%s] DatabaseName[%s] Username[%s]", sessionName, hosts, databaseName, username)
 
 	// Create the database object
-	mongoDatabase := &_MongoDatabase{
+	mongoSession := &_MongoSession{
 		MongoDBDialInfo: &mgo.DialInfo{
 			Addrs:    hosts,
 			Timeout:  10 * time.Second,
@@ -112,7 +114,7 @@ func CreateSession(goRoutine string, hosts []string, databaseName string, userna
 	}
 
 	// Establish the master session
-	mongoDatabase.MongoSession, err = mgo.DialWithInfo(mongoDatabase.MongoDBDialInfo)
+	mongoSession.MongoSession, err = mgo.DialWithInfo(mongoSession.MongoDBDialInfo)
 	if err != nil {
 
 		tracelog.LogSystemf(goRoutine, _NAMESPACE, "CreateSession", "ERROR : %s", err)
@@ -123,17 +125,17 @@ func CreateSession(goRoutine string, hosts []string, databaseName string, userna
 	// unique connection so that reads and writes are fully consistent,
 	// ordered, and observing the most up-to-date data.
 	// http://godoc.org/labix.org/v2/mgo#Session.SetMode
-	mongoDatabase.MongoSession.SetMode(mgo.Strong, true)
+	mongoSession.MongoSession.SetMode(mgo.Strong, true)
 
 	// Have the session check for errors
 	// http://godoc.org/labix.org/v2/mgo#Session.SetSafe
-	mongoDatabase.MongoSession.SetSafe(&mgo.Safe{})
+	mongoSession.MongoSession.SetSafe(&mgo.Safe{})
 
 	// Don't want any longer than 10 second for an operation to complete
-	mongoDatabase.MongoSession.SetSyncTimeout(10 * time.Second)
+	mongoSession.MongoSession.SetSyncTimeout(10 * time.Second)
 
 	// Add the database to the map
-	_This.Databases[databaseName] = mongoDatabase
+	_This.Sessions[sessionName] = mongoSession
 
 	tracelog.LogSystem(goRoutine, _NAMESPACE, "CreateSession", "Completed")
 
@@ -142,24 +144,31 @@ func CreateSession(goRoutine string, hosts []string, databaseName string, userna
 
 // CopySession get a new connection based on the master connection
 //  goRoutine: The name of the routine making the call
-//  databaseName: The name of the database to use
-func CopySession(goRoutine string, databaseName string) (mongoSession *mgo.Session, err error) {
+func CopyMasterSession(goRoutine string) (mongoSession *mgo.Session, err error) {
+
+	return CopySession(goRoutine, MASTER_SESSION)
+}
+
+// CopySession get a new connection based on the master connection
+//  goRoutine: The name of the routine making the call
+//  useSession: The name of the session to use
+func CopySession(goRoutine string, useSession string) (mongoSession *mgo.Session, err error) {
 
 	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "CopySession")
 
-	tracelog.LogSystemf(goRoutine, _NAMESPACE, "CopySession", "Started : DatabaseName[%s]", databaseName)
+	tracelog.LogSystemf(goRoutine, _NAMESPACE, "CopySession", "Started : UseSession[%s]", useSession)
 
-	// Find the database object
-	mongoDatabase := _This.Databases[databaseName]
+	// Find the session object
+	session := _This.Sessions[useSession]
 
-	if mongoDatabase == nil {
+	if session == nil {
 
-		tracelog.LogSystemf(goRoutine, _NAMESPACE, "CopySession", "Completed : ERROR : Unable To Locate Database %s", databaseName)
+		tracelog.LogSystemf(goRoutine, _NAMESPACE, "CopySession", "Completed : ERROR : Unable To Locate Session %s", useSession)
 		return
 	}
 
 	// Copy the master session
-	mongoSession = mongoDatabase.MongoSession.Copy()
+	mongoSession = session.MongoSession.Copy()
 
 	tracelog.LogSystem(goRoutine, _NAMESPACE, "CopySession", "Completed")
 
@@ -182,19 +191,10 @@ func CloseSession(goRoutine string, mongoSession *mgo.Session) {
 // GetCollection returns a reference to a collection for the specified database and collection name
 //  goRoutine: The name of the routine making the call
 //  mongoSession; The session to use to make the call
-//  databaseName: The name of the database that contains the collection
-//  collectionName: The name of the collection to access
-func GetCollection(goRoutine string, mongoSession *mgo.Session, databaseName string, collectionName string) (collection *mgo.Collection, err error) {
-
-	// Find the database object
-	mongoDatabase := _This.Databases[databaseName]
-
-	if mongoDatabase == nil {
-
-		tracelog.LogSystemf(goRoutine, _NAMESPACE, "GetCollection", "Completed : ERROR : Unable To Locate Database %s", databaseName)
-		return
-	}
+//  useDatabase: The name of the database that contains the collection
+//  useCollection: The name of the collection to access
+func GetCollection(goRoutine string, mongoSession *mgo.Session, useDatabase string, useCollection string) (collection *mgo.Collection, err error) {
 
 	// Access the buoy_stations collection
-	return mongoSession.DB(databaseName).C(collectionName), err
+	return mongoSession.DB(useDatabase).C(useCollection), err
 }
