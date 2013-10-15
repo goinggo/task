@@ -54,7 +54,7 @@ func Run(userControl Controller) (osExit int) {
 	if err := _This.Init(); err != nil {
 
 		tracelog.LogSystemAlertf(EmailAlertSubject, "main", _NAMESPACE, "Run", "%s", err)
-		return 1
+		os.Exit(1)
 	}
 
 	// Run the program
@@ -65,10 +65,10 @@ func Run(userControl Controller) (osExit int) {
 
 	// Did we error
 	if err != nil {
-		return 1
+		os.Exit(1)
 	}
 
-	return 0
+	return
 }
 
 // IsShutdown returns the value of the shutdown flag
