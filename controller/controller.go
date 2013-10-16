@@ -82,7 +82,7 @@ func IsShutdown() bool {
 // Init is called to initialize the package
 func (this *_ControlManager) Init() (err error) {
 
-	defer helper.CatchPanicSystem(&err, "main", _NAMESPACE, "Run")
+	defer helper.CatchPanicSystem(&err, "main", _NAMESPACE, "Init")
 
 	// Capture the environment and path for the straps
 	environment, path := this.UserControl.StrapEnv()
@@ -122,15 +122,20 @@ func (this *_ControlManager) Init() (err error) {
 // Start gets the program running
 func (this *_ControlManager) Start() (err error) {
 
-	defer helper.CatchPanicSystem(&err, "main", _NAMESPACE, "Run")
+	defer helper.CatchPanicSystem(&err, "main", _NAMESPACE, "Start")
 
-	tracelog.LogSystem("main", _NAMESPACE, "Run", "Started")
+	tracelog.LogSystem("main", _NAMESPACE, "Start", "Started")
 
 	// Create a channel to talk with the OS
 	sigChan := make(chan os.Signal, 1)
 
 	// Ask the OS to notify us about events
 	signal.Notify(sigChan)
+
+	// Launch the process
+	tracelog.LogSystem("main", _NAMESPACE, "Start", "******> Launch Task")
+	complete := make(chan error)
+	go this.LaunchProcessor(complete)
 
 	for {
 
@@ -141,7 +146,7 @@ func (this *_ControlManager) Start() (err error) {
 			// Convert the signal to an integer so we can display the hex number
 			sigAsInt, _ := strconv.Atoi(fmt.Sprintf("%d", whatSig))
 
-			tracelog.LogSystemf("main", _NAMESPACE, "Run", "******> OS Notification: %v : %#x", whatSig, sigAsInt)
+			tracelog.LogSystemf("main", _NAMESPACE, "Start", "******> OS Notification: %v : %#x", whatSig, sigAsInt)
 
 			// Did we get any of these termination events
 			if whatSig == syscall.SIGINT ||
@@ -150,7 +155,7 @@ func (this *_ControlManager) Start() (err error) {
 				whatSig == syscall.SIGSTOP ||
 				whatSig == syscall.SIGTERM {
 
-				tracelog.LogSystemf("main", _NAMESPACE, "Run", "******> Program Being Killed")
+				tracelog.LogSystemf("main", _NAMESPACE, "Start", "******> Program Being Killed")
 
 				// Set the flag to indicate the program should shutdown early
 				this.Shutdown = true
@@ -158,11 +163,9 @@ func (this *_ControlManager) Start() (err error) {
 
 			continue
 
-		case err = <-func() chan error {
-			complete := make(chan error)
-			go this.LaunchProcessor(complete)
-			return complete
-		}():
+		case err = <-complete:
+
+			tracelog.LogSystem("main", _NAMESPACE, "Start", "******> Task Complete")
 
 			// Break the case
 			break
@@ -173,7 +176,7 @@ func (this *_ControlManager) Start() (err error) {
 	}
 
 	// Program finished
-	tracelog.LogSystem("main", _NAMESPACE, "Run", "Completed")
+	tracelog.LogSystem("main", _NAMESPACE, "Start", "Completed")
 
 	return err
 }
@@ -181,7 +184,7 @@ func (this *_ControlManager) Start() (err error) {
 // Close releases all resource and prepares the program to terminate
 func (this *_ControlManager) Close() (err error) {
 
-	defer helper.CatchPanicSystem(&err, "main", _NAMESPACE, "Run")
+	defer helper.CatchPanicSystem(&err, "main", _NAMESPACE, "Close")
 
 	// Shutdown the log system
 	tracelog.Shutdown()
