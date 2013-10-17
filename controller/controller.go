@@ -160,6 +160,7 @@ func (this *_ControlManager) Start() (err error) {
 				this.Shutdown = true
 			} else if whatSig == syscall.SIGKILL {
 
+				fmt.Printf("******> SIGNAL KILL REPORTED\n")
 				os.Exit(1)
 			}
 
