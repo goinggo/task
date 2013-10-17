@@ -150,7 +150,6 @@ func (this *_ControlManager) Start() (err error) {
 
 			// Did we get any of these termination events
 			if whatSig == syscall.SIGINT ||
-				whatSig == syscall.SIGKILL ||
 				whatSig == syscall.SIGQUIT ||
 				whatSig == syscall.SIGSTOP ||
 				whatSig == syscall.SIGTERM {
@@ -159,6 +158,9 @@ func (this *_ControlManager) Start() (err error) {
 
 				// Set the flag to indicate the program should shutdown early
 				this.Shutdown = true
+			} else if whatSig == syscall.SIGKILL {
+
+				os.Exit(1)
 			}
 
 			continue
