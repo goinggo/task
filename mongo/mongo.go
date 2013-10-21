@@ -195,6 +195,32 @@ func CloseSession(goRoutine string, mongoSession *mgo.Session) {
 //  useCollection: The name of the collection to access
 func GetCollection(goRoutine string, mongoSession *mgo.Session, useDatabase string, useCollection string) (collection *mgo.Collection, err error) {
 
-	// Access the buoy_stations collection
+	// Access the specified collection
 	return mongoSession.DB(useDatabase).C(useCollection), err
+}
+
+// CollectionExists returns true if the collection name exists in the specified database
+//  goRoutine: The name of the routine making the call
+//  mongoSession; The session to use to make the call
+//  useDatabase: The name of the database that contains the collection
+//  useCollection: The name of the collection to access
+func CollectionExists(goRoutine string, mongoSession *mgo.Session, useDatabase string, useCollection string) bool {
+
+	database := mongoSession.DB(useDatabase)
+	collections, err := database.CollectionNames()
+
+	if err != nil {
+
+		return false
+	}
+
+	for _, collection := range collections {
+
+		if collection == useCollection {
+
+			return true
+		}
+	}
+
+	return false
 }
