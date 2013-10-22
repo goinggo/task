@@ -11,7 +11,7 @@ import (
 //** GLOBAL VARIABLES
 
 var (
-	_EmailTemplate *template.Template // A template for sending emails
+	emailTemplate *template.Template // A template for sending emails
 )
 
 // SendEmail will send an email
@@ -20,14 +20,12 @@ var (
 //  subject: The subject line for the email
 //  message: The message to send in the email
 func SendEmail(goRoutine string, namespace string, subject string, message string) (err error) {
-
 	defer CatchPanicSystem(&err, goRoutine, namespace, "SendEmail")
 
 	tracelog.LogSystemf(goRoutine, namespace, "SendEmail", "Started : Subject[%s]", subject)
 
-	if _EmailTemplate == nil {
-
-		_EmailTemplate = template.Must(template.New("emailTemplate").Parse(_EmailScript()))
+	if emailTemplate == nil {
+		emailTemplate = template.Must(template.New("emailTemplate").Parse(emailScript()))
 	}
 
 	parameters := &struct {
@@ -43,26 +41,23 @@ func SendEmail(goRoutine string, namespace string, subject string, message strin
 	}
 
 	emailMessage := new(bytes.Buffer)
-	_EmailTemplate.Execute(emailMessage, parameters)
+	emailTemplate.Execute(emailMessage, parameters)
 
 	auth := smtp.PlainAuth("", EmailUserName, EmailPassword, EmailHost)
 
 	err = smtp.SendMail(fmt.Sprintf("%s:%d", EmailHost, EmailPort), auth, EmailUserName, []string{EmailTo}, emailMessage.Bytes())
 
 	if err != nil {
-
 		tracelog.LogSystemf(goRoutine, namespace, "SendEmail", "Completed : ERROR :  %v", err)
 		return err
 	}
 
 	tracelog.LogSystem(goRoutine, namespace, "SendEmail", "Completed")
-
 	return err
 }
 
-// _EmailScript returns a template for the email message to be sent
-func _EmailScript() (script string) {
-
+// emailScript returns a template for the email message to be sent
+func emailScript() (script string) {
 	return `From: {{.From}}
 To: {{.To}}
 Subject: {{.Subject}}
@@ -78,7 +73,6 @@ Content-Type: text/html; charset="UTF-8"
 //  subject: The subject line for the email
 //  problems: The slice of problems
 func SendProblemEmail(goRoutine string, namespace string, subject string, problems []string) (err error) {
-
 	defer CatchPanicSystem(&err, goRoutine, namespace, "SendProblemEmail")
 
 	tracelog.LogSystem(goRoutine, namespace, "SendProblemEmail", "Started")
@@ -88,7 +82,6 @@ func SendProblemEmail(goRoutine string, namespace string, subject string, proble
 
 	// Build the message
 	for _, problem := range problems {
-
 		message.WriteString(fmt.Sprintf("%s<br />", problem))
 	}
 
@@ -96,6 +89,5 @@ func SendProblemEmail(goRoutine string, namespace string, subject string, proble
 	SendEmail(goRoutine, namespace, subject, message.String())
 
 	tracelog.LogSystem(goRoutine, namespace, "SendProblemEmail", "Completed")
-
 	return err
 }

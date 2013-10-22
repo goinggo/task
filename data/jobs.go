@@ -35,7 +35,6 @@ type Job struct {
 //  useSession: The mongo session to use
 //  useDatabase: The name of the database to use
 func CleanJobs(goRoutine string, useSession string, useDatabase string) (err error) {
-
 	defer helper.CatchPanicSystem(&err, goRoutine, "data", "CleanJobs")
 
 	tracelog.LogSystemf(goRoutine, "data", "CleanJobs", "Started : UseSession[%s] UseDatabase[%s]", useSession, useDatabase)
@@ -44,14 +43,12 @@ func CleanJobs(goRoutine string, useSession string, useDatabase string) (err err
 	currentTime := time.Now().UTC()
 
 	if currentTime.Hour() == 0 && (currentTime.Minute() >= 0 && currentTime.Minute() <= 5) {
-
 		tracelog.LogSystemf(goRoutine, "data", "CleanJobs", "Info : Performing Clean Job : %v", currentTime)
 
 		// Grab a mongo session
 		mongoSession, err := mongo.CopySession(goRoutine, useSession)
 
 		if err != nil {
-
 			tracelog.LogSystemf(goRoutine, "data", "CleanJobs", "Completed : ERROR : %s", err)
 			return err
 		}
@@ -62,7 +59,6 @@ func CleanJobs(goRoutine string, useSession string, useDatabase string) (err err
 		collection, err := mongo.GetCollection(goRoutine, mongoSession, useDatabase, "jobs")
 
 		if err != nil {
-
 			tracelog.LogSystemf(goRoutine, "data", "CleanJobs", "Completed : ERROR : %s", err)
 			return err
 		}
@@ -71,14 +67,12 @@ func CleanJobs(goRoutine string, useSession string, useDatabase string) (err err
 		query := bson.M{"startDate": bson.M{"$lt": removeDate}}
 
 		if _, err = collection.RemoveAll(query); err != nil {
-
 			tracelog.LogSystemf(goRoutine, "data", "CleanJobs", "Completed : ERROR : %s", err)
 			return err
 		}
 	}
 
 	tracelog.LogSystem(goRoutine, "data", "CleanJobs", "Completed")
-
 	return err
 }
 
@@ -88,7 +82,6 @@ func CleanJobs(goRoutine string, useSession string, useDatabase string) (err err
 //  useDatabase: The name of the database to use
 //  jobType: The type of job being started
 func StartJob(goRoutine string, useSession string, useDatabase string, jobType string) (job *Job, err error) {
-
 	defer helper.CatchPanicSystem(&err, goRoutine, "data", "StartJob")
 
 	tracelog.LogSystemf(goRoutine, "data", "StartJob", "Started : UseSession[%s] UseDatabase[%s] JobType[%s]", useSession, useDatabase, jobType)
@@ -97,7 +90,6 @@ func StartJob(goRoutine string, useSession string, useDatabase string, jobType s
 	mongoSession, err := mongo.CopySession(goRoutine, useSession)
 
 	if err != nil {
-
 		tracelog.LogSystemf(goRoutine, "data", "StartJob", "Completed : ERROR : %s", err)
 		return job, err
 	}
@@ -108,7 +100,6 @@ func StartJob(goRoutine string, useSession string, useDatabase string, jobType s
 	collection, err := mongo.GetCollection(goRoutine, mongoSession, useDatabase, JOBS_COLLECTION)
 
 	if err != nil {
-
 		tracelog.LogSystemf(goRoutine, "data", "StartJob", "Completed : ERROR : %s", err)
 		return job, err
 	}
@@ -122,13 +113,11 @@ func StartJob(goRoutine string, useSession string, useDatabase string, jobType s
 
 	// Insert the job
 	if err = collection.Insert(job); err != nil {
-
 		tracelog.LogSystemf(goRoutine, "data", "StartJob", "Completed : ERROR : %s", err)
 		return job, err
 	}
 
 	tracelog.LogSystem(goRoutine, "data", "StartJob", "Completed")
-
 	return job, err
 }
 
@@ -139,7 +128,6 @@ func StartJob(goRoutine string, useSession string, useDatabase string, jobType s
 //  result: A message about the disposition of the job
 //  job: The job to end
 func EndJob(goRoutine string, useSession string, useDatabase string, result string, job *Job) (err error) {
-
 	defer helper.CatchPanicSystem(&err, goRoutine, "data", "EndJob")
 
 	tracelog.LogSystemf(goRoutine, "data", "EndJob", "Started : UseSession[%s] UseDatabase[%s] Id[%v] Result[%s]", useSession, useDatabase, job.ObjectId, result)
@@ -148,7 +136,6 @@ func EndJob(goRoutine string, useSession string, useDatabase string, result stri
 	mongoSession, err := mongo.CopySession(goRoutine, useSession)
 
 	if err != nil {
-
 		tracelog.LogSystemf(goRoutine, "data", "EndJob", "Completed : ERROR : %s", err)
 		return err
 	}
@@ -159,7 +146,6 @@ func EndJob(goRoutine string, useSession string, useDatabase string, result stri
 	collection, err := mongo.GetCollection(goRoutine, mongoSession, useDatabase, JOBS_COLLECTION)
 
 	if err != nil {
-
 		tracelog.LogSystemf(goRoutine, "data", "EndJob", "Completed : ERROR : %s", err)
 		return err
 	}
@@ -171,13 +157,11 @@ func EndJob(goRoutine string, useSession string, useDatabase string, result stri
 	err = collection.UpdateId(job.ObjectId, update)
 
 	if err != nil {
-
 		tracelog.LogSystemf(goRoutine, "data", "EndJob", "Completed : ERROR : %s", err)
 		return err
 	}
 
 	tracelog.LogSystem(goRoutine, "data", "EndJob", "Completed")
-
 	return err
 }
 
@@ -189,7 +173,6 @@ func EndJob(goRoutine string, useSession string, useDatabase string, result stri
 //  task: The task being performed
 //  details: The details around the task
 func AddJobDetail(goRoutine string, useSession string, useDatabase string, job *Job, task string, details string) (err error) {
-
 	defer helper.CatchPanicSystem(&err, goRoutine, "data", "AddJobDetail")
 
 	tracelog.LogSystemf(goRoutine, "data", "AddJobDetail", "Started : UseSession[%s] UseDatabase[%s] Id[%v] Task[%v] Details[%s]", useSession, useDatabase, job.ObjectId, task, details)
@@ -198,7 +181,6 @@ func AddJobDetail(goRoutine string, useSession string, useDatabase string, job *
 	mongoSession, err := mongo.CopySession(goRoutine, useSession)
 
 	if err != nil {
-
 		tracelog.LogSystemf(goRoutine, "data", "AddJobDetail", "Completed : ERROR : %s", err)
 		return err
 	}
@@ -209,7 +191,6 @@ func AddJobDetail(goRoutine string, useSession string, useDatabase string, job *
 	collection, err := mongo.GetCollection(goRoutine, mongoSession, useDatabase, JOBS_COLLECTION)
 
 	if err != nil {
-
 		tracelog.LogSystemf(goRoutine, "data", "AddJobDetail", "Completed : ERROR : %s", err)
 		return err
 	}
@@ -228,12 +209,10 @@ func AddJobDetail(goRoutine string, useSession string, useDatabase string, job *
 	_, err = collection.UpsertId(job.ObjectId, update)
 
 	if err != nil {
-
 		tracelog.LogSystemf(goRoutine, "data", "AddJobDetail", "Completed : ERROR : %s", err)
 		return err
 	}
 
 	tracelog.LogSystem(goRoutine, "data", "AddJobDetail", "Completed")
-
 	return err
 }

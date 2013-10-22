@@ -14,9 +14,7 @@ import (
 //  namespace: The namespace the call is being made from
 //  functionName: The function makeing the call
 func CatchPanicSystem(err *error, goRoutine string, namespace string, functionName string) {
-
 	if r := recover(); r != nil {
-
 		// Capture the stack trace
 		buf := make([]byte, 10000)
 		runtime.Stack(buf, false)
@@ -24,7 +22,6 @@ func CatchPanicSystem(err *error, goRoutine string, namespace string, functionNa
 		tracelog.LogSystemAlertf(EmailAlertSubject, goRoutine, namespace, functionName, "PANIC Defered [%v] : Stack Trace : %v", r, string(buf))
 
 		if err != nil {
-
 			*err = fmt.Errorf("%v", r)
 		}
 	}
@@ -37,7 +34,6 @@ func CatchPanicSystem(err *error, goRoutine string, namespace string, functionNa
 //  namespace: The namespace the call is being made from
 //  functionName: The function makeing the call
 func CatchPanic(err *error, logKey string, goRoutine string, namespace string, functionName string) {
-
 	if r := recover(); r != nil {
 
 		// Capture the stack trace
@@ -47,7 +43,6 @@ func CatchPanic(err *error, logKey string, goRoutine string, namespace string, f
 		tracelog.LogAlertf(EmailAlertSubject, logKey, goRoutine, namespace, functionName, "PANIC Defered [%v] : Stack Trace : %v", r, string(buf))
 
 		if err != nil {
-
 			*err = fmt.Errorf("%v", r)
 		}
 	}
