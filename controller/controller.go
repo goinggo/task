@@ -75,7 +75,14 @@ func Run(userControl Controller) (osExit int) {
 // IsShutdown returns the value of the shutdown flag
 func IsShutdown() bool {
 
-	return atomic.CompareAndSwapInt32(&_This.Shutdown, 1, 1)
+	value := atomic.LoadInt32(&_This.Shutdown)
+
+	if value == 1 {
+
+		return true
+	}
+
+	return false
 }
 
 //** MEMBER FUNCTIONS
@@ -150,19 +157,16 @@ func (this *_ControlManager) Start() (err error) {
 			tracelog.LogSystemf("main", _NAMESPACE, "Start", "******> OS Notification: %v : %#x", whatSig, sigAsInt)
 
 			// Did we get any of these termination events
-			if whatSig == syscall.SIGINT ||
-				whatSig == syscall.SIGQUIT ||
-				whatSig == syscall.SIGSTOP ||
-				whatSig == syscall.SIGTERM {
+			if whatSig == syscall.SIGKILL {
+
+				fmt.Printf("******> SIGNAL KILL REPORTED\n")
+				os.Exit(1)
+			} else if whatSig == os.Interrupt {
 
 				tracelog.LogSystemf("main", _NAMESPACE, "Start", "******> Program Being Killed")
 
 				// Set the flag to indicate the program should shutdown early
-				atomic.CompareAndSwapInt32(&_This.Shutdown, 0, 1)
-			} else if whatSig == syscall.SIGKILL {
-
-				fmt.Printf("******> SIGNAL KILL REPORTED\n")
-				os.Exit(1)
+				atomic.StoreInt32(&_This.Shutdown, 1)
 			}
 
 			continue
