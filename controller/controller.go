@@ -8,6 +8,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"sync/atomic"
 	"syscall"
 )
 
@@ -23,7 +24,7 @@ const (
 
 // _Controller manages the starting and shutting down of the program
 type _ControlManager struct {
-	Shutdown    bool
+	Shutdown    int32
 	UserControl Controller
 }
 
@@ -46,7 +47,7 @@ func Run(userControl Controller) (osExit int) {
 
 	// Create the control manager
 	_This = &_ControlManager{
-		Shutdown:    false,
+		Shutdown:    0,
 		UserControl: userControl,
 	}
 
@@ -74,7 +75,7 @@ func Run(userControl Controller) (osExit int) {
 // IsShutdown returns the value of the shutdown flag
 func IsShutdown() bool {
 
-	return _This.Shutdown
+	return atomic.CompareAndSwapInt32(&_This.Shutdown, 1, 1)
 }
 
 //** MEMBER FUNCTIONS
@@ -157,7 +158,7 @@ func (this *_ControlManager) Start() (err error) {
 				tracelog.LogSystemf("main", _NAMESPACE, "Start", "******> Program Being Killed")
 
 				// Set the flag to indicate the program should shutdown early
-				this.Shutdown = true
+				atomic.CompareAndSwapInt32(&_This.Shutdown, 0, 1)
 			} else if whatSig == syscall.SIGKILL {
 
 				fmt.Printf("******> SIGNAL KILL REPORTED\n")
