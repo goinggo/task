@@ -149,9 +149,11 @@ func (this *controlManager) Start() (err error) {
 			// Did we get any of these termination events
 			if whatSig == syscall.SIGKILL {
 				fmt.Printf("******> SIGNAL KILL REPORTED\n")
+				helper.SendEmail("main", "main", helper.EmailAlertSubject, "SIGKILL - Killing Program")
 				os.Exit(1)
 			} else if whatSig == os.Interrupt {
 				tracelog.LogSystemf("main", _NAMESPACE, "Start", "******> Program Being Killed")
+				helper.SendEmail("main", "main", helper.EmailAlertSubject, "OS INTERRUPT - Shutting Down Program")
 
 				// Set the flag to indicate the program should shutdown early
 				atomic.StoreInt32(&_This.Shutdown, 1)
@@ -160,6 +162,7 @@ func (this *controlManager) Start() (err error) {
 
 		case <-time.After(time.Duration(helper.TimeoutSeconds) * time.Second):
 			fmt.Printf("******> TIMEOUT\n")
+			helper.SendEmail("main", "main", helper.EmailAlertSubject, "Timeout - Killing Program")
 			os.Exit(1)
 
 		case err = <-complete:
