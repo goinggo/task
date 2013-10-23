@@ -9,7 +9,6 @@ import (
 	"os/signal"
 	"strconv"
 	"sync/atomic"
-	"syscall"
 	"time"
 )
 
@@ -141,17 +140,11 @@ func (this *controlManager) Start() (err error) {
 	for {
 		select {
 		case whatSig := <-sigChan:
-			// Convert the signal to an integer so we can display the hex number
 			sigAsInt, _ := strconv.Atoi(fmt.Sprintf("%d", whatSig))
-
 			tracelog.LogSystemf("main", _NAMESPACE, "Start", "******> OS Notification: %v : %#x", whatSig, sigAsInt)
 
 			// Did we get any of these termination events
-			if whatSig == syscall.SIGKILL {
-				fmt.Printf("******> SIGNAL KILL REPORTED\n")
-				helper.SendEmail("main", "main", helper.EmailAlertSubject, "SIGKILL - Killing Program")
-				os.Exit(1)
-			} else if whatSig == os.Interrupt {
+			if whatSig == os.Interrupt {
 				tracelog.LogSystemf("main", _NAMESPACE, "Start", "******> Program Being Killed")
 				helper.SendEmail("main", "main", helper.EmailAlertSubject, "OS INTERRUPT - Shutting Down Program")
 
