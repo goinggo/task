@@ -10,6 +10,7 @@ import (
 	"strconv"
 	"sync/atomic"
 	"syscall"
+	"time"
 )
 
 //** CONSTANTS
@@ -105,6 +106,7 @@ func (this *controlManager) Init() (err error) {
 	helper.EmailPassword = straps.Strap("emailPassword")
 	helper.EmailTo = straps.Strap("emailTo")
 	helper.EmailAlertSubject = straps.Strap("emailAlertSubject")
+	helper.TimeoutSeconds = straps.StrapInt("timeoutSeconds")
 
 	consoleOnly := straps.StrapBool("consoleLogOnly")
 
@@ -155,6 +157,10 @@ func (this *controlManager) Start() (err error) {
 				atomic.StoreInt32(&_This.Shutdown, 1)
 			}
 			continue
+
+		case <-time.After(time.Duration(helper.TimeoutSeconds) * time.Second):
+			fmt.Printf("******> TIMEOUT\n")
+			os.Exit(1)
 
 		case err = <-complete:
 			tracelog.LogSystem("main", _NAMESPACE, "Start", "******> Task Complete")

@@ -9,4 +9,5 @@ var (
 	EmailPassword     string // The password for authentication
 	EmailTo           string // Address to send messages
 	EmailAlertSubject string // The subject for email alerts
+	TimeoutSeconds    int    // The timeout in seconds for kill the process
 )
