@@ -7,7 +7,6 @@ import (
 	"github.com/goinggo/utilities/tracelog"
 	"os"
 	"os/signal"
-	"strconv"
 	"sync/atomic"
 	"time"
 )
@@ -128,9 +127,7 @@ func (this *controlManager) Start() (err error) {
 
 	// Create a channel to talk with the OS
 	sigChan := make(chan os.Signal, 1)
-
-	// Ask the OS to notify us about events
-	signal.Notify(sigChan)
+	signal.Notify(sigChan, os.Interrupt)
 
 	// Launch the process
 	tracelog.LogSystem("main", _NAMESPACE, "Start", "******> Launch Task")
@@ -139,18 +136,12 @@ func (this *controlManager) Start() (err error) {
 
 	for {
 		select {
-		case whatSig := <-sigChan:
-			sigAsInt, _ := strconv.Atoi(fmt.Sprintf("%d", whatSig))
-			tracelog.LogSystemf("main", _NAMESPACE, "Start", "******> OS Notification: %v : %#x", whatSig, sigAsInt)
+		case <-sigChan:
+			tracelog.LogSystemf("main", _NAMESPACE, "Start", "******> Program Being Killed")
+			helper.SendEmail("main", "main", helper.EmailAlertSubject, "OS INTERRUPT - Shutting Down Program")
 
-			// Did we get any of these termination events
-			if whatSig == os.Interrupt {
-				tracelog.LogSystemf("main", _NAMESPACE, "Start", "******> Program Being Killed")
-				helper.SendEmail("main", "main", helper.EmailAlertSubject, "OS INTERRUPT - Shutting Down Program")
-
-				// Set the flag to indicate the program should shutdown early
-				atomic.StoreInt32(&_This.Shutdown, 1)
-			}
+			// Set the flag to indicate the program should shutdown early
+			atomic.StoreInt32(&_This.Shutdown, 1)
 			continue
 
 		case <-time.After(time.Duration(helper.TimeoutSeconds) * time.Second):
@@ -160,8 +151,6 @@ func (this *controlManager) Start() (err error) {
 
 		case err = <-complete:
 			tracelog.LogSystem("main", _NAMESPACE, "Start", "******> Task Complete")
-
-			// Break the case
 			break
 		}
 
