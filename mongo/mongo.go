@@ -176,11 +176,10 @@ func CloseSession(goRoutine string, mongoSession *mgo.Session) {
 }
 
 // GetCollection returns a reference to a collection for the specified database and collection name
-//  goRoutine: The name of the routine making the call
 //  mongoSession; The session to use to make the call
 //  useDatabase: The name of the database that contains the collection
 //  useCollection: The name of the collection to access
-func GetCollection(goRoutine string, mongoSession *mgo.Session, useDatabase string, useCollection string) (collection *mgo.Collection, err error) {
+func GetCollection(mongoSession *mgo.Session, useDatabase string, useCollection string) (collection *mgo.Collection, err error) {
 	// Access the specified collection
 	return mongoSession.DB(useDatabase).C(useCollection), err
 }

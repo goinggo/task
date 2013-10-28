@@ -56,7 +56,7 @@ func CleanJobs(goRoutine string, useSession string, useDatabase string) (err err
 		defer mongo.CloseSession(goRoutine, mongoSession)
 
 		// Access the jobs collection
-		collection, err := mongo.GetCollection(goRoutine, mongoSession, useDatabase, "jobs")
+		collection, err := mongo.GetCollection(mongoSession, useDatabase, "jobs")
 
 		if err != nil {
 			tracelog.LogSystemf(goRoutine, "data", "CleanJobs", "Completed : ERROR : %s", err)
@@ -97,7 +97,7 @@ func StartJob(goRoutine string, useSession string, useDatabase string, jobType s
 	defer mongo.CloseSession(goRoutine, mongoSession)
 
 	// Access the jobs collection
-	collection, err := mongo.GetCollection(goRoutine, mongoSession, useDatabase, JOBS_COLLECTION)
+	collection, err := mongo.GetCollection(mongoSession, useDatabase, JOBS_COLLECTION)
 
 	if err != nil {
 		tracelog.LogSystemf(goRoutine, "data", "StartJob", "Completed : ERROR : %s", err)
@@ -143,7 +143,7 @@ func EndJob(goRoutine string, useSession string, useDatabase string, result stri
 	defer mongo.CloseSession(goRoutine, mongoSession)
 
 	// Access the jobs collection
-	collection, err := mongo.GetCollection(goRoutine, mongoSession, useDatabase, JOBS_COLLECTION)
+	collection, err := mongo.GetCollection(mongoSession, useDatabase, JOBS_COLLECTION)
 
 	if err != nil {
 		tracelog.LogSystemf(goRoutine, "data", "EndJob", "Completed : ERROR : %s", err)
@@ -188,7 +188,7 @@ func AddJobDetail(goRoutine string, useSession string, useDatabase string, job *
 	defer mongo.CloseSession(goRoutine, mongoSession)
 
 	// Access the jobs collection
-	collection, err := mongo.GetCollection(goRoutine, mongoSession, useDatabase, JOBS_COLLECTION)
+	collection, err := mongo.GetCollection(mongoSession, useDatabase, JOBS_COLLECTION)
 
 	if err != nil {
 		tracelog.LogSystemf(goRoutine, "data", "AddJobDetail", "Completed : ERROR : %s", err)
