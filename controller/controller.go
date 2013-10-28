@@ -84,7 +84,12 @@ func IsShutdown() bool {
 
 // Init is called to initialize the package
 func (this *controlManager) Init() (err error) {
-	defer helper.CatchPanicSystem(&err, "main", _NAMESPACE, "Init")
+	defer func() {
+		if r := recover(); r != nil {
+			fmt.Printf("Init Exceptions: %s\n", r)
+			os.Exit(1)
+		}
+	}()
 
 	// Capture the environment and path for the straps
 	environment, path := this.UserControl.StrapEnv()
