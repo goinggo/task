@@ -168,7 +168,7 @@ func EndJob(goRoutine string, useSession string, useDatabase string, result stri
 
 // AddJobDetail captures a session and then writes a job detail record to the specifed job
 //  goRoutine: The name of the routine making the call
-//  mongoSession: The database used to create the session
+//  useSession: The name of the session to use
 //  useDatabase: The name of the database to use
 //  job: The job to update
 //  task: The task being performed
@@ -189,9 +189,9 @@ func AddJobDetail(goRoutine string, useSession string, useDatabase string, job *
 	return AddJobDetailWithSession(goRoutine, mongoSession, useDatabase, job, task, details)
 }
 
-// AddJobDetailWithSession writes a job detail record to the specifed job
+// AddJobDetailWithSession captures a session and then writes a job detail record to the specifed job
 //  goRoutine: The name of the routine making the call
-//  mongoSession: The mongo session for the call
+//  mongoSession: The database used to create the session
 //  useDatabase: The name of the database to use
 //  job: The job to update
 //  task: The task being performed
