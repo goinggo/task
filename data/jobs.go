@@ -4,6 +4,7 @@ import (
 	"github.com/goinggo/task/helper"
 	"github.com/goinggo/task/mongo"
 	"github.com/goinggo/utilities/tracelog"
+	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"time"
 )
@@ -165,17 +166,15 @@ func EndJob(goRoutine string, useSession string, useDatabase string, result stri
 	return err
 }
 
-// AddJobDetail writes a job detail record to the specifed job
+// AddJobDetail captures a session and then writes a job detail record to the specifed job
 //  goRoutine: The name of the routine making the call
-//  useSession: The database used to create the session
+//  mongoSession: The database used to create the session
 //  useDatabase: The name of the database to use
 //  job: The job to update
 //  task: The task being performed
 //  details: The details around the task
 func AddJobDetail(goRoutine string, useSession string, useDatabase string, job *Job, task string, details string) (err error) {
 	defer helper.CatchPanicSystem(&err, goRoutine, "data", "AddJobDetail")
-
-	tracelog.LogSystemf(goRoutine, "data", "AddJobDetail", "Started : UseSession[%s] UseDatabase[%s] Id[%v] Task[%v] Details[%s]", useSession, useDatabase, job.ObjectId, task, details)
 
 	// Grab a mongo session
 	mongoSession, err := mongo.CopySession(goRoutine, useSession)
@@ -187,11 +186,26 @@ func AddJobDetail(goRoutine string, useSession string, useDatabase string, job *
 
 	defer mongo.CloseSession(goRoutine, mongoSession)
 
+	return AddJobDetailWithSession(goRoutine, mongoSession, useDatabase, job, task, details)
+}
+
+// AddJobDetailWithSession writes a job detail record to the specifed job
+//  goRoutine: The name of the routine making the call
+//  mongoSession: The mongo session for the call
+//  useDatabase: The name of the database to use
+//  job: The job to update
+//  task: The task being performed
+//  details: The details around the task
+func AddJobDetailWithSession(goRoutine string, mongoSession *mgo.Session, useDatabase string, job *Job, task string, details string) (err error) {
+	defer helper.CatchPanicSystem(&err, goRoutine, "data", "AddJobDetailWithSession")
+
+	tracelog.LogSystemf(goRoutine, "data", "AddJobDetailWithSession", "Started : UseDatabase[%s] Id[%v] Task[%v] Details[%s]", useDatabase, job.ObjectId, task, details)
+
 	// Access the jobs collection
 	collection, err := mongo.GetCollection(mongoSession, useDatabase, JOBS_COLLECTION)
 
 	if err != nil {
-		tracelog.LogSystemf(goRoutine, "data", "AddJobDetail", "Completed : ERROR : %s", err)
+		tracelog.LogSystemf(goRoutine, "data", "AddJobDetailWithSession", "Completed : ERROR : %s", err)
 		return err
 	}
 
@@ -209,10 +223,10 @@ func AddJobDetail(goRoutine string, useSession string, useDatabase string, job *
 	_, err = collection.UpsertId(job.ObjectId, update)
 
 	if err != nil {
-		tracelog.LogSystemf(goRoutine, "data", "AddJobDetail", "Completed : ERROR : %s", err)
+		tracelog.LogSystemf(goRoutine, "data", "AddJobDetailWithSession", "Completed : ERROR : %s", err)
 		return err
 	}
 
-	tracelog.LogSystem(goRoutine, "data", "AddJobDetail", "Completed")
+	tracelog.LogSystem(goRoutine, "data", "AddJobDetailWithSession", "Completed")
 	return err
 }
