@@ -116,10 +116,10 @@ func (this *controlManager) Init() (err error) {
 	if consoleOnly == true {
 		tracelog.StartupStdoutOnly(straps.Strap("machineName"))
 	} else {
-		// Start the log and configure email alerts
 		tracelog.Startup(straps.Strap("baseFilePath"), straps.Strap("machineName"), straps.StrapInt("daysToKeep"))
-		tracelog.ConfigureEmailAlerts(helper.EmailHost, helper.EmailPort, helper.EmailUserName, helper.EmailPassword, []string{helper.EmailTo})
 	}
+
+	tracelog.ConfigureEmailAlerts(helper.EmailHost, helper.EmailPort, helper.EmailUserName, helper.EmailPassword, []string{helper.EmailTo})
 
 	return err
 }

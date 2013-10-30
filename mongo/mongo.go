@@ -180,11 +180,6 @@ func CloseSession(goRoutine string, mongoSession *mgo.Session) {
 //  useDatabase: The name of the database that contains the collection
 //  useCollection: The name of the collection to access
 func GetCollection(mongoSession *mgo.Session, useDatabase string, useCollection string) (collection *mgo.Collection, err error) {
-	// Refresh puts back any reserved sockets in use and
-	// restarts the consistency guarantees according to the
-	// current consistency setting for the session
-	mongoSession.Refresh()
-
 	// Access the specified collection
 	return mongoSession.DB(useDatabase).C(useCollection), err
 }
