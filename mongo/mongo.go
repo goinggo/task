@@ -100,7 +100,7 @@ func CreateSession(goRoutine string, sessionName string, hosts []string, databas
 	mongoSession := &mongoSession{
 		MongoDBDialInfo: &mgo.DialInfo{
 			Addrs:    hosts,
-			Timeout:  10 * time.Second,
+			Timeout:  60 * time.Second,
 			Database: databaseName,
 			Username: username,
 			Password: password,
