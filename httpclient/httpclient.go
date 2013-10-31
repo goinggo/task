@@ -90,9 +90,9 @@ var ClientTransport *Transport
 // init is called to initialize the package with timeouts
 func init() {
 	ClientTransport = &Transport{
-		ConnectTimeout:        10 * time.Second,
-		RequestTimeout:        70 * time.Second,
+		ConnectTimeout:        25 * time.Second,
 		ResponseHeaderTimeout: 60 * time.Second,
+		RequestTimeout:        85 * time.Second,
 	}
 }
 

@@ -47,7 +47,7 @@ var _This *mongoManager // Reference to the singleton
 func Startup(goRoutine string) (err error) {
 	defer helper.CatchPanicSystem(&err, goRoutine, _NAMESPACE, "Startup")
 
-	tracelog.LogSystem(goRoutine, _NAMESPACE, "Startup", "Started")
+	tracelog.LogSystemStarted(goRoutine, _NAMESPACE, "Startup")
 
 	// Create the Mongo Manager
 	_This = &mongoManager{
@@ -64,7 +64,7 @@ func Startup(goRoutine string) (err error) {
 	// Create the master session
 	err = CreateSession(goRoutine, MASTER_SESSION, hosts, straps.Strap("mgo_database"), straps.Strap("mgo_username"), straps.Strap("mgo_password"))
 
-	tracelog.LogSystem(goRoutine, _NAMESPACE, "Startup", "Completed")
+	tracelog.LogSystemCompleted(goRoutine, _NAMESPACE, "Startup")
 	return
 }
 
@@ -73,14 +73,14 @@ func Startup(goRoutine string) (err error) {
 func Shutdown(goRoutine string) (err error) {
 	defer helper.CatchPanicSystem(&err, goRoutine, _NAMESPACE, "Shutdown")
 
-	tracelog.LogSystem(goRoutine, _NAMESPACE, "Shutdown", "Started")
+	tracelog.LogSystemStarted(goRoutine, _NAMESPACE, "Shutdown")
 
 	// Close the databases
 	for _, session := range _This.Sessions {
 		CloseSession(goRoutine, session.MongoSession)
 	}
 
-	tracelog.LogSystem(goRoutine, _NAMESPACE, "Shutdown", "Completed")
+	tracelog.LogSystemCompleted(goRoutine, _NAMESPACE, "Shutdown")
 	return
 }
 
@@ -94,7 +94,7 @@ func Shutdown(goRoutine string) (err error) {
 func CreateSession(goRoutine string, sessionName string, hosts []string, databaseName string, username string, password string) (err error) {
 	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "CreateSession")
 
-	tracelog.LogSystemf(goRoutine, _NAMESPACE, "CreateSession", "Started : SessionName[%s] Hosts[%s] DatabaseName[%s] Username[%s]", sessionName, hosts, databaseName, username)
+	tracelog.LogSystemStartedf(goRoutine, _NAMESPACE, "CreateSession", "SessionName[%s] Hosts[%s] DatabaseName[%s] Username[%s]", sessionName, hosts, databaseName, username)
 
 	// Create the database object
 	mongoSession := &mongoSession{
@@ -110,7 +110,7 @@ func CreateSession(goRoutine string, sessionName string, hosts []string, databas
 	// Establish the master session
 	mongoSession.MongoSession, err = mgo.DialWithInfo(mongoSession.MongoDBDialInfo)
 	if err != nil {
-		tracelog.LogSystemf(goRoutine, _NAMESPACE, "CreateSession", "ERROR : %s", err)
+		tracelog.LogSystemErrorCompleted(err, goRoutine, _NAMESPACE, "CreateSession")
 		return
 	}
 
@@ -130,7 +130,7 @@ func CreateSession(goRoutine string, sessionName string, hosts []string, databas
 	// Add the database to the map
 	_This.Sessions[sessionName] = mongoSession
 
-	tracelog.LogSystem(goRoutine, _NAMESPACE, "CreateSession", "Completed")
+	tracelog.LogSystemCompleted(goRoutine, _NAMESPACE, "CreateSession")
 	return
 }
 
@@ -146,7 +146,7 @@ func CopyMasterSession(goRoutine string) (mongoSession *mgo.Session, err error) 
 func CopySession(goRoutine string, useSession string) (mongoSession *mgo.Session, err error) {
 	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "CopySession")
 
-	tracelog.LogSystemf(goRoutine, _NAMESPACE, "CopySession", "Started : UseSession[%s]", useSession)
+	tracelog.LogSystemStartedf(goRoutine, _NAMESPACE, "CopySession", "UseSession[%s]", useSession)
 
 	// Find the session object
 	session := _This.Sessions[useSession]
@@ -159,7 +159,7 @@ func CopySession(goRoutine string, useSession string) (mongoSession *mgo.Session
 	// Copy the master session
 	mongoSession = session.MongoSession.Copy()
 
-	tracelog.LogSystem(goRoutine, _NAMESPACE, "CopySession", "Completed")
+	tracelog.LogSystemCompleted(goRoutine, _NAMESPACE, "CopySession")
 	return
 }
 
@@ -168,11 +168,11 @@ func CopySession(goRoutine string, useSession string) (mongoSession *mgo.Session
 func CloseSession(goRoutine string, mongoSession *mgo.Session) {
 	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "CloseSession")
 
-	tracelog.LogSystem(goRoutine, _NAMESPACE, "CloseSession", "Started")
+	tracelog.LogSystemStarted(goRoutine, _NAMESPACE, "CloseSession")
 
 	mongoSession.Close()
 
-	tracelog.LogSystem(goRoutine, _NAMESPACE, "CloseSession", "Completed")
+	tracelog.LogSystemCompleted(goRoutine, _NAMESPACE, "CloseSession")
 }
 
 // GetCollection returns a reference to a collection for the specified database and collection name
