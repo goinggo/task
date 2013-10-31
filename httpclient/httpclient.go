@@ -1,4 +1,6 @@
 /*
+github.com/mreiferson/go-httpclient
+
 Provides an HTTP Transport that implements the `RoundTripper` interface and
 can be used as a built in replacement for the standard library's, providing:
 
@@ -20,13 +22,9 @@ import (
 	"time"
 )
 
-var ClientTransport *Transport
+// ** NEW TYPES
 
-// returns the current version of the package
-func Version() string {
-	return "0.4.1"
-}
-
+// Transport provides a thin wrapper arounf http.Transport
 type Transport struct {
 	// Proxy specifies a function to return a proxy for a given
 	// *http.Request. If the function returns a non-nil error, the
@@ -76,6 +74,20 @@ type Transport struct {
 	transport *http.Transport
 }
 
+// bodyCloseInterceptor
+type bodyCloseInterceptor struct {
+	io.ReadCloser
+	timer *time.Timer
+}
+
+// ** PACKAGE VARIABLES
+
+// Maintains a single Transport for all calls
+var ClientTransport *Transport
+
+//** INIT
+
+// init is called to initialize the package with timeouts
 func init() {
 	ClientTransport = &Transport{
 		ConnectTimeout:        10 * time.Second,
@@ -84,6 +96,14 @@ func init() {
 	}
 }
 
+//** PUBLIC FUNCTIONS
+
+// Version returns the current version of the package
+func Version() string {
+	return "0.4.1"
+}
+
+// Get implements an http get with timeouts
 func Get(url string) (resp *http.Response, err error) {
 	client := &http.Client{Transport: ClientTransport}
 	req, _ := http.NewRequest("GET", url, nil)
@@ -95,6 +115,7 @@ func Get(url string) (resp *http.Response, err error) {
 	return resp, err
 }
 
+// DoRequest implements a client do with timeouts
 func DoRequest(req *http.Request) (resp *http.Response, err error) {
 	client := &http.Client{Transport: ClientTransport}
 	resp, err = client.Do(req)
@@ -111,6 +132,9 @@ func (t *Transport) Close() error {
 	return nil
 }
 
+//** TRANSPORT MEMBER FUNCTIONS
+
+// lazyStart
 func (t *Transport) lazyStart() {
 	dialer := &net.Dialer{Timeout: t.ConnectTimeout}
 	t.transport = &http.Transport{
@@ -124,6 +148,8 @@ func (t *Transport) lazyStart() {
 	}
 }
 
+// RoundTrip implements the RoundTripper interface
+//  req: The http request to process
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	t.starter.Do(t.lazyStart)
 
@@ -145,11 +171,9 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	return
 }
 
-type bodyCloseInterceptor struct {
-	io.ReadCloser
-	timer *time.Timer
-}
+//** INTERCEPTOR MEMBER FUNCTIONS
 
+// Close
 func (bci *bodyCloseInterceptor) Close() error {
 	bci.timer.Stop()
 	return bci.ReadCloser.Close()
