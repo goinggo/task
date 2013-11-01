@@ -154,6 +154,33 @@ func CopySession(goRoutine string, useSession string) (mongoSession *mgo.Session
 	return mongoSession, err
 }
 
+// CloneMasterSession get a connection based on the master connection
+func CloneMasterSession(goRoutine string) (*mgo.Session, error) {
+	return CloneSession(goRoutine, MASTER_SESSION)
+}
+
+// CloneSession get a connection based on the master connection
+func CloneSession(goRoutine string, useSession string) (mongoSession *mgo.Session, err error) {
+	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "CopySession")
+
+	tracelog.LogSystemStartedf(goRoutine, _NAMESPACE, "CloneSession", "UseSession[%s]", useSession)
+
+	// Find the session object
+	session := _This.Sessions[useSession]
+
+	if session == nil {
+		err = fmt.Errorf("Unable To Locate Session %s", useSession)
+		tracelog.LogSystemErrorCompleted(err, goRoutine, _NAMESPACE, "CloneSession")
+		return mongoSession, err
+	}
+
+	// Clone the master session
+	mongoSession = session.MongoSession.Clone()
+
+	tracelog.LogSystemCompleted(goRoutine, _NAMESPACE, "CloneSession")
+	return mongoSession, err
+}
+
 // CloseSession puts the connection back into the pool
 func CloseSession(goRoutine string, mongoSession *mgo.Session) {
 	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "CloseSession")
