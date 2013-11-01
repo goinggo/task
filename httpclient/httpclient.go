@@ -149,7 +149,6 @@ func (t *Transport) lazyStart() {
 }
 
 // RoundTrip implements the RoundTripper interface
-//  req: The http request to process
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	t.starter.Do(t.lazyStart)
 

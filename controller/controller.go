@@ -41,7 +41,6 @@ var _This *controlManager
 //** PUBLIC FUNCTIONS
 
 // Run is the entry point for the controller
-//  userControl: A pointer to the users program logic
 func Run(userControl Controller) (osExit int) {
 	// Create the control manager
 	_This = &controlManager{
@@ -179,7 +178,6 @@ func (this *controlManager) Close() (err error) {
 }
 
 // LaunchProcessor instanciates the specified inventory processor and runs the job
-//  complete: The channel to send result on when processing is complete
 func (this *controlManager) LaunchProcessor(complete chan error) {
 	tracelog.LogSystemf("launch", _NAMESPACE, "LaunchProcessor", "Started")
 

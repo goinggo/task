@@ -15,14 +15,10 @@ var (
 )
 
 // SendEmail will send an email
-//  goRoutine The Go routine making the call
-//  namespace: The namespace the call is being made from
-//  subject: The subject line for the email
-//  message: The message to send in the email
 func SendEmail(goRoutine string, namespace string, subject string, message string) (err error) {
 	defer CatchPanicSystem(&err, goRoutine, namespace, "SendEmail")
 
-	tracelog.LogSystemf(goRoutine, namespace, "SendEmail", "Started : Subject[%s]", subject)
+	tracelog.LogSystemStartedf(goRoutine, namespace, "SendEmail", "Subject[%s]", subject)
 
 	if emailTemplate == nil {
 		emailTemplate = template.Must(template.New("emailTemplate").Parse(emailScript()))
@@ -48,11 +44,11 @@ func SendEmail(goRoutine string, namespace string, subject string, message strin
 	err = smtp.SendMail(fmt.Sprintf("%s:%d", EmailHost, EmailPort), auth, EmailUserName, []string{EmailTo}, emailMessage.Bytes())
 
 	if err != nil {
-		tracelog.LogSystemf(goRoutine, namespace, "SendEmail", "Completed : ERROR :  %v", err)
+		tracelog.LogSystemErrorCompleted(err, goRoutine, namespace, "SendEmail")
 		return err
 	}
 
-	tracelog.LogSystem(goRoutine, namespace, "SendEmail", "Completed")
+	tracelog.LogSystemCompleted(goRoutine, namespace, "SendEmail")
 	return err
 }
 
@@ -68,14 +64,10 @@ Content-Type: text/html; charset="UTF-8"
 }
 
 // SendProblemEmail sends an email with the slice of problems
-//  goRoutine The Go routine making the call
-//  namespace: The namespace the call is being made from
-//  subject: The subject line for the email
-//  problems: The slice of problems
 func SendProblemEmail(goRoutine string, namespace string, subject string, problems []string) (err error) {
 	defer CatchPanicSystem(&err, goRoutine, namespace, "SendProblemEmail")
 
-	tracelog.LogSystem(goRoutine, namespace, "SendProblemEmail", "Started")
+	tracelog.LogSystemStarted(goRoutine, namespace, "SendProblemEmail")
 
 	// Create a buffer to build the message
 	message := new(bytes.Buffer)
@@ -88,6 +80,6 @@ func SendProblemEmail(goRoutine string, namespace string, subject string, proble
 	// Send the email
 	SendEmail(goRoutine, namespace, subject, message.String())
 
-	tracelog.LogSystem(goRoutine, namespace, "SendProblemEmail", "Completed")
+	tracelog.LogSystemCompleted(goRoutine, namespace, "SendProblemEmail")
 	return err
 }

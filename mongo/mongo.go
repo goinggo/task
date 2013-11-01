@@ -43,7 +43,6 @@ var _This *mongoManager // Reference to the singleton
 //** PUBLIC FUNCTIONS
 
 // Startup brings the manager to a running state
-//  goRoutine: The name of the routine making the call
 func Startup(goRoutine string) (err error) {
 	defer helper.CatchPanicSystem(&err, goRoutine, _NAMESPACE, "Startup")
 
@@ -69,7 +68,6 @@ func Startup(goRoutine string) (err error) {
 }
 
 // Shutdown systematically brings the manager down gracefully
-//  goRoutine: The name of the routine making the call
 func Shutdown(goRoutine string) (err error) {
 	defer helper.CatchPanicSystem(&err, goRoutine, _NAMESPACE, "Shutdown")
 
@@ -85,12 +83,6 @@ func Shutdown(goRoutine string) (err error) {
 }
 
 // CreateSession creates a connection pool for use
-//  goRoutine: The name of the routine making the call
-//  sessionName: A unique name for the session
-//  host: The host and port to connect to
-//  databaseName: The name of the database to use
-//  username: The user name for authentication
-//  password: The password for authentication
 func CreateSession(goRoutine string, sessionName string, hosts []string, databaseName string, username string, password string) (err error) {
 	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "CreateSession")
 
@@ -135,14 +127,11 @@ func CreateSession(goRoutine string, sessionName string, hosts []string, databas
 }
 
 // CopySession get a new connection based on the master connection
-//  goRoutine: The name of the routine making the call
 func CopyMasterSession(goRoutine string) (mongoSession *mgo.Session, err error) {
 	return CopySession(goRoutine, MASTER_SESSION)
 }
 
 // CopySession get a new connection based on the master connection
-//  goRoutine: The name of the routine making the call
-//  useSession: The name of the session to use
 func CopySession(goRoutine string, useSession string) (mongoSession *mgo.Session, err error) {
 	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "CopySession")
 
@@ -164,7 +153,6 @@ func CopySession(goRoutine string, useSession string) (mongoSession *mgo.Session
 }
 
 // CloseSession puts the connection back into the pool
-//  goRoutine: The name of the routine making the call
 func CloseSession(goRoutine string, mongoSession *mgo.Session) {
 	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "CloseSession")
 
@@ -176,19 +164,12 @@ func CloseSession(goRoutine string, mongoSession *mgo.Session) {
 }
 
 // GetCollection returns a reference to a collection for the specified database and collection name
-//  mongoSession; The session to use to make the call
-//  useDatabase: The name of the database that contains the collection
-//  useCollection: The name of the collection to access
 func GetCollection(mongoSession *mgo.Session, useDatabase string, useCollection string) (collection *mgo.Collection, err error) {
 	// Access the specified collection
 	return mongoSession.DB(useDatabase).C(useCollection), err
 }
 
 // CollectionExists returns true if the collection name exists in the specified database
-//  goRoutine: The name of the routine making the call
-//  mongoSession; The session to use to make the call
-//  useDatabase: The name of the database that contains the collection
-//  useCollection: The name of the collection to access
 func CollectionExists(goRoutine string, mongoSession *mgo.Session, useDatabase string, useCollection string) bool {
 	database := mongoSession.DB(useDatabase)
 	collections, err := database.CollectionNames()

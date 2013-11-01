@@ -32,9 +32,6 @@ type Job struct {
 }
 
 // CleanJobs removes old jobs from the jobs table
-//  goRoutine: The name of the routine making the call
-//  useSession: The mongo session to use
-//  useDatabase: The name of the database to use
 func CleanJobs(goRoutine string, useSession string, useDatabase string) (err error) {
 	defer helper.CatchPanicSystem(&err, goRoutine, "data", "CleanJobs")
 
@@ -78,10 +75,6 @@ func CleanJobs(goRoutine string, useSession string, useDatabase string) (err err
 }
 
 // StartJob inserts a new job record into mongodb
-//  goRoutine: The name of the routine making the call
-//  useSession: The database used to create the session
-//  useDatabase: The name of the database to use
-//  jobType: The type of job being started
 func StartJob(goRoutine string, useSession string, useDatabase string, jobType string) (job *Job, err error) {
 	defer helper.CatchPanicSystem(&err, goRoutine, "data", "StartJob")
 
@@ -122,11 +115,6 @@ func StartJob(goRoutine string, useSession string, useDatabase string, jobType s
 }
 
 // EndJob updates the specified job document with end date and status
-//  goRoutine: The name of the routine making the call
-//  useSession: The database used to create the session
-//  useDatabase: The name of the database to use
-//  result: A message about the disposition of the job
-//  job: The job to end
 func EndJob(goRoutine string, useSession string, useDatabase string, result string, job *Job) (err error) {
 	defer helper.CatchPanicSystem(&err, goRoutine, "data", "EndJob")
 
@@ -163,12 +151,6 @@ func EndJob(goRoutine string, useSession string, useDatabase string, result stri
 }
 
 // AddJobDetail captures a session and then writes a job detail record to the specifed job
-//  goRoutine: The name of the routine making the call
-//  useSession: The name of the session to use
-//  useDatabase: The name of the database to use
-//  job: The job to update
-//  task: The task being performed
-//  details: The details around the task
 func AddJobDetail(goRoutine string, useSession string, useDatabase string, job *Job, task string, details string) (err error) {
 	defer helper.CatchPanicSystem(&err, goRoutine, "data", "AddJobDetail")
 
@@ -185,12 +167,6 @@ func AddJobDetail(goRoutine string, useSession string, useDatabase string, job *
 }
 
 // AddJobDetailWithSession captures a session and then writes a job detail record to the specifed job
-//  goRoutine: The name of the routine making the call
-//  mongoSession: The database used to create the session
-//  useDatabase: The name of the database to use
-//  job: The job to update
-//  task: The task being performed
-//  details: The details around the task
 func AddJobDetailWithSession(goRoutine string, mongoSession *mgo.Session, useDatabase string, job *Job, task string, details string) (err error) {
 	defer helper.CatchPanicSystem(&err, goRoutine, "data", "AddJobDetailWithSession")
 
