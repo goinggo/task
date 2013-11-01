@@ -8,6 +8,7 @@
 package mongo
 
 import (
+	"fmt"
 	"github.com/goinggo/task/helper"
 	"github.com/goinggo/utilities/straps"
 	"github.com/goinggo/utilities/tracelog"
@@ -64,7 +65,7 @@ func Startup(goRoutine string) (err error) {
 	err = CreateSession(goRoutine, MASTER_SESSION, hosts, straps.Strap("mgo_database"), straps.Strap("mgo_username"), straps.Strap("mgo_password"))
 
 	tracelog.LogSystemCompleted(goRoutine, _NAMESPACE, "Startup")
-	return
+	return err
 }
 
 // Shutdown systematically brings the manager down gracefully
@@ -79,7 +80,7 @@ func Shutdown(goRoutine string) (err error) {
 	}
 
 	tracelog.LogSystemCompleted(goRoutine, _NAMESPACE, "Shutdown")
-	return
+	return err
 }
 
 // CreateSession creates a connection pool for use
@@ -103,7 +104,7 @@ func CreateSession(goRoutine string, sessionName string, hosts []string, databas
 	mongoSession.MongoSession, err = mgo.DialWithInfo(mongoSession.MongoDBDialInfo)
 	if err != nil {
 		tracelog.LogSystemErrorCompleted(err, goRoutine, _NAMESPACE, "CreateSession")
-		return
+		return err
 	}
 
 	// Reads and writes will always be made to the master server using a
@@ -123,11 +124,11 @@ func CreateSession(goRoutine string, sessionName string, hosts []string, databas
 	_This.Sessions[sessionName] = mongoSession
 
 	tracelog.LogSystemCompleted(goRoutine, _NAMESPACE, "CreateSession")
-	return
+	return err
 }
 
 // CopySession get a new connection based on the master connection
-func CopyMasterSession(goRoutine string) (mongoSession *mgo.Session, err error) {
+func CopyMasterSession(goRoutine string) (*mgo.Session, error) {
 	return CopySession(goRoutine, MASTER_SESSION)
 }
 
@@ -141,15 +142,16 @@ func CopySession(goRoutine string, useSession string) (mongoSession *mgo.Session
 	session := _This.Sessions[useSession]
 
 	if session == nil {
-		tracelog.LogSystemf(goRoutine, _NAMESPACE, "CopySession", "Completed : ERROR : Unable To Locate Session %s", useSession)
-		return
+		err = fmt.Errorf("Unable To Locate Session %s", useSession)
+		tracelog.LogSystemErrorCompleted(err, goRoutine, _NAMESPACE, "CopySession")
+		return mongoSession, err
 	}
 
 	// Copy the master session
 	mongoSession = session.MongoSession.Copy()
 
 	tracelog.LogSystemCompleted(goRoutine, _NAMESPACE, "CopySession")
-	return
+	return mongoSession, err
 }
 
 // CloseSession puts the connection back into the pool
@@ -164,9 +166,8 @@ func CloseSession(goRoutine string, mongoSession *mgo.Session) {
 }
 
 // GetCollection returns a reference to a collection for the specified database and collection name
-func GetCollection(mongoSession *mgo.Session, useDatabase string, useCollection string) (collection *mgo.Collection, err error) {
-	// Access the specified collection
-	return mongoSession.DB(useDatabase).C(useCollection), err
+func GetCollection(mongoSession *mgo.Session, useDatabase string, useCollection string) (*mgo.Collection, error) {
+	return mongoSession.DB(useDatabase).C(useCollection), nil
 }
 
 // CollectionExists returns true if the collection name exists in the specified database
