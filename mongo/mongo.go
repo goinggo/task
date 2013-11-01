@@ -127,12 +127,12 @@ func CreateSession(goRoutine string, sessionName string, hosts []string, databas
 	return err
 }
 
-// CopySession get a new connection based on the master connection
+// CopyMasterSession makes a copy of the master session for client use
 func CopyMasterSession(goRoutine string) (*mgo.Session, error) {
 	return CopySession(goRoutine, MASTER_SESSION)
 }
 
-// CopySession get a new connection based on the master connection
+// CopySession makes a copy of the specified session for client use
 func CopySession(goRoutine string, useSession string) (mongoSession *mgo.Session, err error) {
 	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "CopySession")
 
@@ -154,12 +154,12 @@ func CopySession(goRoutine string, useSession string) (mongoSession *mgo.Session
 	return mongoSession, err
 }
 
-// CloneMasterSession get a connection based on the master connection
+// CloneMasterSession makes a clone of the master session for client use
 func CloneMasterSession(goRoutine string) (*mgo.Session, error) {
 	return CloneSession(goRoutine, MASTER_SESSION)
 }
 
-// CloneSession get a connection based on the master connection
+// CopySession makes a clone of the specified session for client use
 func CloneSession(goRoutine string, useSession string) (mongoSession *mgo.Session, err error) {
 	defer helper.CatchPanicSystem(nil, goRoutine, _NAMESPACE, "CopySession")
 
