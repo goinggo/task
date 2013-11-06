@@ -3,7 +3,7 @@ package data
 import (
 	"github.com/goinggo/task/helper"
 	"github.com/goinggo/task/mongo"
-	"github.com/goinggo/utilities/tracelog"
+	"github.com/goinggo/tracelog"
 	"labix.org/v2/mgo"
 	"labix.org/v2/mgo/bson"
 	"time"
@@ -33,21 +33,21 @@ type Job struct {
 
 // CleanJobs removes old jobs from the jobs table
 func CleanJobs(goRoutine string, useSession string, useDatabase string) (err error) {
-	defer helper.CatchPanicSystem(&err, goRoutine, "data", "CleanJobs")
+	defer helper.CatchPanic(&err, goRoutine, "CleanJobs")
 
-	tracelog.LogSystemStartedf(goRoutine, "data", "CleanJobs", "UseSession[%s] UseDatabase[%s]", useSession, useDatabase)
+	tracelog.STARTEDf(goRoutine, "CleanJobs", "UseSession[%s] UseDatabase[%s]", useSession, useDatabase)
 
 	// If it is between 12:00AM - 12:05AM remove old items
 	currentTime := time.Now().UTC()
 
 	if currentTime.Hour() == 0 && (currentTime.Minute() >= 0 && currentTime.Minute() <= 5) {
-		tracelog.LogSystemf(goRoutine, "data", "CleanJobs", "Info : Performing Clean Job : %v", currentTime)
+		tracelog.TRACE(goRoutine, "CleanJobs", "Info : Performing Clean Job : %v", currentTime)
 
 		// Grab a mongo session
 		mongoSession, err := mongo.CloneSession(goRoutine, useSession)
 
 		if err != nil {
-			tracelog.LogSystemErrorCompleted(err, goRoutine, "data", "CleanJobs")
+			tracelog.COMPLETED_ERROR(err, goRoutine, "CleanJobs")
 			return err
 		}
 
@@ -57,7 +57,7 @@ func CleanJobs(goRoutine string, useSession string, useDatabase string) (err err
 		collection, err := mongo.GetCollection(mongoSession, useDatabase, "jobs")
 
 		if err != nil {
-			tracelog.LogSystemErrorCompleted(err, goRoutine, "data", "CleanJobs")
+			tracelog.COMPLETED_ERROR(err, goRoutine, "CleanJobs")
 			return err
 		}
 
@@ -65,25 +65,25 @@ func CleanJobs(goRoutine string, useSession string, useDatabase string) (err err
 		query := bson.M{"startDate": bson.M{"$lt": removeDate}}
 
 		if _, err = collection.RemoveAll(query); err != nil {
-			tracelog.LogSystemErrorCompleted(err, goRoutine, "data", "CleanJobs")
+			tracelog.COMPLETED_ERROR(err, goRoutine, "CleanJobs")
 			return err
 		}
 	}
 
-	tracelog.LogSystemCompleted(goRoutine, "data", "CleanJobs")
+	tracelog.COMPLETED(goRoutine, "CleanJobs")
 	return err
 }
 
 // StartJob inserts a new job record into mongodb
 func StartJob(goRoutine string, useSession string, useDatabase string, jobType string) (job *Job, err error) {
-	defer helper.CatchPanicSystem(&err, goRoutine, "data", "StartJob")
+	defer helper.CatchPanic(&err, goRoutine, "StartJob")
 
-	tracelog.LogSystemStartedf(goRoutine, "data", "StartJob", "UseSession[%s] UseDatabase[%s] JobType[%s]", useSession, useDatabase, jobType)
+	tracelog.STARTEDf(goRoutine, "StartJob", "UseSession[%s] UseDatabase[%s] JobType[%s]", useSession, useDatabase, jobType)
 
 	// Grab a mongo session
 	mongoSession, err := mongo.CloneSession(goRoutine, useSession)
 	if err != nil {
-		tracelog.LogSystemErrorCompleted(err, goRoutine, "data", "StartJob")
+		tracelog.COMPLETED_ERROR(err, goRoutine, "StartJob")
 		return job, err
 	}
 
@@ -92,7 +92,7 @@ func StartJob(goRoutine string, useSession string, useDatabase string, jobType s
 	// Access the jobs collection
 	collection, err := mongo.GetCollection(mongoSession, useDatabase, JOBS_COLLECTION)
 	if err != nil {
-		tracelog.LogSystemErrorCompleted(err, goRoutine, "data", "StartJob")
+		tracelog.COMPLETED_ERROR(err, goRoutine, "StartJob")
 		return job, err
 	}
 
@@ -106,24 +106,24 @@ func StartJob(goRoutine string, useSession string, useDatabase string, jobType s
 	// Insert the job
 	err = collection.Insert(job)
 	if err != nil {
-		tracelog.LogSystemErrorCompleted(err, goRoutine, "data", "StartJob")
+		tracelog.COMPLETED_ERROR(err, goRoutine, "StartJob")
 		return job, err
 	}
 
-	tracelog.LogSystemCompleted(goRoutine, "data", "StartJob")
+	tracelog.COMPLETED(goRoutine, "StartJob")
 	return job, err
 }
 
 // EndJob updates the specified job document with end date and status
 func EndJob(goRoutine string, useSession string, useDatabase string, result string, job *Job) (err error) {
-	defer helper.CatchPanicSystem(&err, goRoutine, "data", "EndJob")
+	defer helper.CatchPanic(&err, goRoutine, "EndJob")
 
-	tracelog.LogSystemStartedf(goRoutine, "data", "EndJob", "UseSession[%s] UseDatabase[%s] Id[%v] Result[%s]", useSession, useDatabase, job.ObjectId, result)
+	tracelog.STARTEDf(goRoutine, "EndJob", "UseSession[%s] UseDatabase[%s] Id[%v] Result[%s]", useSession, useDatabase, job.ObjectId, result)
 
 	// Grab a mongo session
 	mongoSession, err := mongo.CloneSession(goRoutine, useSession)
 	if err != nil {
-		tracelog.LogSystemErrorCompleted(err, goRoutine, "data", "EndJob")
+		tracelog.COMPLETED_ERROR(err, goRoutine, "EndJob")
 		return err
 	}
 
@@ -132,7 +132,7 @@ func EndJob(goRoutine string, useSession string, useDatabase string, result stri
 	// Access the jobs collection
 	collection, err := mongo.GetCollection(mongoSession, useDatabase, JOBS_COLLECTION)
 	if err != nil {
-		tracelog.LogSystemErrorCompleted(err, goRoutine, "data", "EndJob")
+		tracelog.COMPLETED_ERROR(err, goRoutine, "EndJob")
 		return err
 	}
 
@@ -142,22 +142,22 @@ func EndJob(goRoutine string, useSession string, useDatabase string, result stri
 	// Update the job
 	err = collection.UpdateId(job.ObjectId, update)
 	if err != nil {
-		tracelog.LogSystemErrorCompleted(err, goRoutine, "data", "EndJob")
+		tracelog.COMPLETED_ERROR(err, goRoutine, "EndJob")
 		return err
 	}
 
-	tracelog.LogSystemCompleted(goRoutine, "data", "EndJob")
+	tracelog.COMPLETED(goRoutine, "EndJob")
 	return err
 }
 
 // AddJobDetail captures a session and then writes a job detail record to the specifed job
 func AddJobDetail(goRoutine string, useSession string, useDatabase string, job *Job, task string, details string) (err error) {
-	defer helper.CatchPanicSystem(&err, goRoutine, "data", "AddJobDetail")
+	defer helper.CatchPanic(&err, goRoutine, "AddJobDetail")
 
 	// Grab a mongo session
 	mongoSession, err := mongo.CloneSession(goRoutine, useSession)
 	if err != nil {
-		tracelog.LogSystemErrorCompleted(err, goRoutine, "data", "AddJobDetail")
+		tracelog.COMPLETED_ERROR(err, goRoutine, "AddJobDetail")
 		return err
 	}
 
@@ -168,14 +168,14 @@ func AddJobDetail(goRoutine string, useSession string, useDatabase string, job *
 
 // AddJobDetailWithSession captures a session and then writes a job detail record to the specifed job
 func AddJobDetailWithSession(goRoutine string, mongoSession *mgo.Session, useDatabase string, job *Job, task string, details string) (err error) {
-	defer helper.CatchPanicSystem(&err, goRoutine, "data", "AddJobDetailWithSession")
+	defer helper.CatchPanic(&err, goRoutine, "AddJobDetailWithSession")
 
-	tracelog.LogSystemStartedf(goRoutine, "data", "AddJobDetailWithSession", "UseDatabase[%s] Id[%v] Task[%v] Details[%s]", useDatabase, job.ObjectId, task, details)
+	tracelog.STARTEDf(goRoutine, "AddJobDetailWithSession", "UseDatabase[%s] Id[%v] Task[%v] Details[%s]", useDatabase, job.ObjectId, task, details)
 
 	// Access the jobs collection
 	collection, err := mongo.GetCollection(mongoSession, useDatabase, JOBS_COLLECTION)
 	if err != nil {
-		tracelog.LogSystemErrorCompleted(err, goRoutine, "data", "AddJobDetailWithSession")
+		tracelog.COMPLETED_ERROR(err, goRoutine, "AddJobDetailWithSession")
 		return err
 	}
 
@@ -192,10 +192,10 @@ func AddJobDetailWithSession(goRoutine string, mongoSession *mgo.Session, useDat
 	// Update the job
 	_, err = collection.UpsertId(job.ObjectId, update)
 	if err != nil {
-		tracelog.LogSystemErrorCompleted(err, goRoutine, "data", "AddJobDetailWithSession")
+		tracelog.COMPLETED_ERROR(err, goRoutine, "AddJobDetailWithSession")
 		return err
 	}
 
-	tracelog.LogSystemCompleted(goRoutine, "data", "AddJobDetailWithSession")
+	tracelog.COMPLETED(goRoutine, "AddJobDetailWithSession")
 	return err
 }

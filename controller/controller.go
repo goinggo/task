@@ -1,10 +1,10 @@
 package controller
 
 import (
-	"fmt"
+	"github.com/goinggo/straps"
 	"github.com/goinggo/task/helper"
-	"github.com/goinggo/utilities/straps"
-	"github.com/goinggo/utilities/tracelog"
+	"github.com/goinggo/tracelog"
+	"log"
 	"os"
 	"os/signal"
 	"sync/atomic"
@@ -15,7 +15,6 @@ import (
 
 // Constants
 const (
-	_NAMESPACE        = "controller"
 	EmailAlertSubject = "Controller Exception"
 )
 
@@ -49,13 +48,13 @@ func Run(userControl Controller) (osExit int) {
 	}
 
 	// Init the program
-	if err := _This.Init(); err != nil {
-		tracelog.LogSystemAlertf(EmailAlertSubject, "main", _NAMESPACE, "Run", "%s", err)
+	err := _This.Init()
+	if err != nil {
 		os.Exit(1)
 	}
 
 	// Run the program
-	err := _This.Start()
+	err = _This.Start()
 
 	// Close the program
 	_This.Close()
@@ -85,7 +84,7 @@ func IsShutdown() bool {
 func (this *controlManager) Init() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			fmt.Printf("Init Exceptions: %s\n", r)
+			log.Printf("main : Init : Init Exceptions: %s\n", r)
 			os.Exit(1)
 		}
 	}()
@@ -94,8 +93,7 @@ func (this *controlManager) Init() (err error) {
 	environment, path := this.UserControl.StrapEnv()
 
 	if os.Getenv(environment) == "" {
-		fmt.Printf("Environment %s Missing\n", environment)
-		os.Exit(1)
+		log.Fatalf("Environment %s Missing\n", environment)
 	}
 
 	// Load the straps file
@@ -113,48 +111,48 @@ func (this *controlManager) Init() (err error) {
 	consoleOnly := straps.StrapBool("consoleLogOnly")
 
 	if consoleOnly == true {
-		tracelog.StartupStdoutOnly(straps.Strap("machineName"))
+		tracelog.Start(tracelog.LEVEL_TRACE)
 	} else {
-		tracelog.Startup(straps.Strap("baseFilePath"), straps.Strap("machineName"), straps.StrapInt("daysToKeep"))
+		tracelog.StartFile(tracelog.LEVEL_TRACE, straps.Strap("baseFilePath"), straps.StrapInt("daysToKeep"))
 	}
 
-	tracelog.ConfigureEmailAlerts(helper.EmailHost, helper.EmailPort, helper.EmailUserName, helper.EmailPassword, []string{helper.EmailTo})
+	tracelog.ConfigureEmail(helper.EmailHost, helper.EmailPort, helper.EmailUserName, helper.EmailPassword, []string{helper.EmailTo})
 
 	return err
 }
 
 // Start gets the program running
 func (this *controlManager) Start() (err error) {
-	defer helper.CatchPanicSystem(&err, "main", _NAMESPACE, "Start")
+	defer helper.CatchPanic(&err, "main", "Start")
 
-	tracelog.LogSystem("main", _NAMESPACE, "Start", "Started")
+	tracelog.STARTED("main", "Start")
 
 	// Create a channel to talk with the OS
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
 
 	// Launch the process
-	tracelog.LogSystem("main", _NAMESPACE, "Start", "******> Launch Task")
+	tracelog.TRACE("main", "Start", "******> Launch Task")
 	complete := make(chan error)
 	go this.LaunchProcessor(complete)
 
 	for {
 		select {
 		case <-sigChan:
-			tracelog.LogSystemf("main", _NAMESPACE, "Start", "******> Program Being Killed")
-			helper.SendEmail("main", "main", helper.EmailAlertSubject, "OS INTERRUPT - Shutting Down Program")
+			tracelog.TRACE("main", "Start", "******> Program Being Killed")
+			helper.SendEmail("main", helper.EmailAlertSubject, "OS INTERRUPT - Shutting Down Program")
 
 			// Set the flag to indicate the program should shutdown early
 			atomic.StoreInt32(&_This.Shutdown, 1)
 			continue
 
 		case <-time.After(time.Duration(helper.TimeoutSeconds) * time.Second):
-			fmt.Printf("******> TIMEOUT\n")
-			helper.SendEmail("main", "main", helper.EmailAlertSubject, "Timeout - Killing Program")
+			tracelog.WARN("main", "Start", "******> TIMEOUT")
+			helper.SendEmail("main", helper.EmailAlertSubject, "Timeout - Killing Program")
 			os.Exit(1)
 
 		case err = <-complete:
-			tracelog.LogSystem("main", _NAMESPACE, "Start", "******> Task Complete")
+			tracelog.TRACE("main", "Start", "******> Task Complete")
 			break
 		}
 
@@ -163,23 +161,23 @@ func (this *controlManager) Start() (err error) {
 	}
 
 	// Program finished
-	tracelog.LogSystem("main", _NAMESPACE, "Start", "Completed")
+	tracelog.COMPLETED("main", "Start")
 	return err
 }
 
 // Close releases all resource and prepares the program to terminate
 func (this *controlManager) Close() (err error) {
-	defer helper.CatchPanicSystem(&err, "main", _NAMESPACE, "Close")
+	defer helper.CatchPanic(&err, "main", "Close")
 
 	// Shutdown the log system
-	tracelog.Shutdown()
+	tracelog.Stop()
 
 	return err
 }
 
 // LaunchProcessor instanciates the specified inventory processor and runs the job
 func (this *controlManager) LaunchProcessor(complete chan error) {
-	tracelog.LogSystemf("launch", _NAMESPACE, "LaunchProcessor", "Started")
+	tracelog.STARTED("launch", "LaunchProcessor")
 
 	var err error
 
@@ -191,5 +189,5 @@ func (this *controlManager) LaunchProcessor(complete chan error) {
 	// Run the user code
 	err = this.UserControl.Run()
 
-	tracelog.LogSystemf("launch", _NAMESPACE, "LaunchProcessor", "Completed")
+	tracelog.COMPLETED("launch", "LaunchProcessor")
 }
