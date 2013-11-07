@@ -139,16 +139,14 @@ func (this *controlManager) Start() (err error) {
 	for {
 		select {
 		case <-sigChan:
-			tracelog.TRACE("main", "Start", "******> Program Being Killed")
-			helper.SendEmail("main", helper.EmailAlertSubject, "OS INTERRUPT - Shutting Down Program")
+			tracelog.ALERT(helper.EmailAlertSubject, "main", "Start", "OS INTERRUPT - Program Being Killed")
 
 			// Set the flag to indicate the program should shutdown early
 			atomic.StoreInt32(&_This.Shutdown, 1)
 			continue
 
 		case <-time.After(time.Duration(helper.TimeoutSeconds) * time.Second):
-			tracelog.WARN("main", "Start", "******> TIMEOUT")
-			helper.SendEmail("main", helper.EmailAlertSubject, "Timeout - Killing Program")
+			tracelog.ALERT(helper.EmailAlertSubject, "main", "Start", "Timeout - Killing Program")
 			os.Exit(1)
 
 		case err = <-complete:
