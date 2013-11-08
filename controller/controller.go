@@ -22,8 +22,8 @@ const (
 
 // controlManager manages the starting and shutting down of the program
 type controlManager struct {
-	Shutdown    int32
-	UserControl Controller
+	shutdown    int32
+	userControl Controller
 }
 
 // Controller provides the functionality for the running application
@@ -43,21 +43,21 @@ var _This *controlManager
 func Run(userControl Controller) (osExit int) {
 	// Create the control manager
 	_This = &controlManager{
-		Shutdown:    0,
-		UserControl: userControl,
+		shutdown:    0,
+		userControl: userControl,
 	}
 
 	// Init the program
-	err := _This.Init()
+	err := _This.init()
 	if err != nil {
 		os.Exit(1)
 	}
 
 	// Run the program
-	err = _This.Start()
+	err = _This.start()
 
 	// Close the program
-	_This.Close()
+	_This.stop()
 
 	// Did we error
 	if err != nil {
@@ -67,9 +67,9 @@ func Run(userControl Controller) (osExit int) {
 	return
 }
 
-// IsShutdown returns the value of the shutdown flag
+// Isshutdown returns the value of the shutdown flag
 func IsShutdown() bool {
-	value := atomic.LoadInt32(&_This.Shutdown)
+	value := atomic.LoadInt32(&_This.shutdown)
 
 	if value == 1 {
 		return true
@@ -80,17 +80,17 @@ func IsShutdown() bool {
 
 //** MEMBER FUNCTIONS
 
-// Init is called to initialize the package
-func (this *controlManager) Init() (err error) {
+// init is called to initialize the package
+func (this *controlManager) init() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Printf("main : Init : Init Exceptions: %s\n", r)
+			log.Printf("main : init : Init Exceptions: %s\n", r)
 			os.Exit(1)
 		}
 	}()
 
 	// Capture the environment and path for the straps
-	environment, path := this.UserControl.StrapEnv()
+	environment, path := this.userControl.StrapEnv()
 
 	if os.Getenv(environment) == "" {
 		log.Fatalf("Environment %s Missing\n", environment)
@@ -121,36 +121,36 @@ func (this *controlManager) Init() (err error) {
 	return err
 }
 
-// Start gets the program running
-func (this *controlManager) Start() (err error) {
-	defer helper.CatchPanic(&err, "main", "Start")
+// start gets the program running
+func (this *controlManager) start() (err error) {
+	defer helper.CatchPanic(&err, "main", "start")
 
-	tracelog.STARTED("main", "Start")
+	tracelog.STARTED("main", "start")
 
 	// Create a channel to talk with the OS
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
 
 	// Launch the process
-	tracelog.TRACE("main", "Start", "******> Launch Task")
+	tracelog.TRACE("main", "start", "******> Launch Task")
 	complete := make(chan error)
-	go this.LaunchProcessor(complete)
+	go this.launchProcessor(complete)
 
 	for {
 		select {
 		case <-sigChan:
-			tracelog.ALERT(helper.EmailAlertSubject, "main", "Start", "OS INTERRUPT - Program Being Killed")
+			tracelog.ALERT(helper.EmailAlertSubject, "main", "start", "OS INTERRUPT - Program Being Killed")
 
 			// Set the flag to indicate the program should shutdown early
-			atomic.StoreInt32(&_This.Shutdown, 1)
+			atomic.StoreInt32(&_This.shutdown, 1)
 			continue
 
 		case <-time.After(time.Duration(helper.TimeoutSeconds) * time.Second):
-			tracelog.ALERT(helper.EmailAlertSubject, "main", "Start", "Timeout - Killing Program")
+			tracelog.ALERT(helper.EmailAlertSubject, "main", "start", "Timeout - Killing Program")
 			os.Exit(1)
 
 		case err = <-complete:
-			tracelog.TRACE("main", "Start", "******> Task Complete")
+			tracelog.TRACE("main", "start", "******> Task Complete")
 			break
 		}
 
@@ -159,33 +159,33 @@ func (this *controlManager) Start() (err error) {
 	}
 
 	// Program finished
-	tracelog.COMPLETED("main", "Start")
+	tracelog.COMPLETED("main", "start")
 	return err
 }
 
-// Close releases all resource and prepares the program to terminate
-func (this *controlManager) Close() (err error) {
-	defer helper.CatchPanic(&err, "main", "Close")
+// stop releases all resource and prepares the program to terminate
+func (this *controlManager) stop() (err error) {
+	defer helper.CatchPanic(&err, "main", "stop")
 
-	// Shutdown the log system
+	// shutdown the log system
 	tracelog.Stop()
 
 	return err
 }
 
-// LaunchProcessor instanciates the specified inventory processor and runs the job
-func (this *controlManager) LaunchProcessor(complete chan error) {
-	tracelog.STARTED("launch", "LaunchProcessor")
+// launchProcessor instanciates the specified inventory processor and runs the job
+func (this *controlManager) launchProcessor(complete chan error) {
+	tracelog.STARTED("launch", "launchProcessor")
 
 	var err error
 
 	defer func() {
-		// Shutdown the program
+		// shutdown the program
 		complete <- err
 	}()
 
 	// Run the user code
-	err = this.UserControl.Run()
+	err = this.userControl.Run()
 
-	tracelog.COMPLETED("launch", "LaunchProcessor")
+	tracelog.COMPLETED("launch", "launchProcessor")
 }

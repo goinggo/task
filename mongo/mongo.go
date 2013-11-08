@@ -27,13 +27,13 @@ const (
 //** NEW TYPES
 
 type mongoSession struct {
-	MongoDBDialInfo *mgo.DialInfo // The connection information
-	MongoSession    *mgo.Session  // A master connection
+	mongoDBDialInfo *mgo.DialInfo // The connection information
+	mongoSession    *mgo.Session  // A master connection
 }
 
 // mongoManager manages a connection and session
 type mongoManager struct {
-	Sessions map[string]*mongoSession // Map of available sessions
+	sessions map[string]*mongoSession // Map of available sessions
 }
 
 //** SINGLETON REFERENCE
@@ -50,7 +50,7 @@ func Startup(goRoutine string) (err error) {
 
 	// Create the Mongo Manager
 	_This = &mongoManager{
-		Sessions: map[string]*mongoSession{},
+		sessions: map[string]*mongoSession{},
 	}
 
 	// Log the mongodb connection straps
@@ -74,8 +74,8 @@ func Shutdown(goRoutine string) (err error) {
 	tracelog.STARTED(goRoutine, "Shutdown")
 
 	// Close the databases
-	for _, session := range _This.Sessions {
-		CloseSession(goRoutine, session.MongoSession)
+	for _, session := range _This.sessions {
+		CloseSession(goRoutine, session.mongoSession)
 	}
 
 	tracelog.COMPLETED(goRoutine, "Shutdown")
@@ -90,7 +90,7 @@ func CreateSession(goRoutine string, sessionName string, hosts []string, databas
 
 	// Create the database object
 	mongoSession := &mongoSession{
-		MongoDBDialInfo: &mgo.DialInfo{
+		mongoDBDialInfo: &mgo.DialInfo{
 			Addrs:    hosts,
 			Timeout:  60 * time.Second,
 			Database: databaseName,
@@ -100,7 +100,7 @@ func CreateSession(goRoutine string, sessionName string, hosts []string, databas
 	}
 
 	// Establish the master session
-	mongoSession.MongoSession, err = mgo.DialWithInfo(mongoSession.MongoDBDialInfo)
+	mongoSession.mongoSession, err = mgo.DialWithInfo(mongoSession.mongoDBDialInfo)
 	if err != nil {
 		tracelog.COMPLETED_ERROR(err, goRoutine, "CreateSession")
 		return err
@@ -110,17 +110,17 @@ func CreateSession(goRoutine string, sessionName string, hosts []string, databas
 	// unique connection so that reads and writes are fully consistent,
 	// ordered, and observing the most up-to-date data.
 	// http://godoc.org/labix.org/v2/mgo#Session.SetMode
-	mongoSession.MongoSession.SetMode(mgo.Strong, true)
+	mongoSession.mongoSession.SetMode(mgo.Strong, true)
 
 	// Have the session check for errors
 	// http://godoc.org/labix.org/v2/mgo#Session.SetSafe
-	mongoSession.MongoSession.SetSafe(&mgo.Safe{})
+	mongoSession.mongoSession.SetSafe(&mgo.Safe{})
 
 	// Don't want any longer than 10 second for an operation to complete
-	mongoSession.MongoSession.SetSyncTimeout(10 * time.Second)
+	mongoSession.mongoSession.SetSyncTimeout(10 * time.Second)
 
 	// Add the database to the map
-	_This.Sessions[sessionName] = mongoSession
+	_This.sessions[sessionName] = mongoSession
 
 	tracelog.COMPLETED(goRoutine, "CreateSession")
 	return err
@@ -138,7 +138,7 @@ func CopySession(goRoutine string, useSession string) (mongoSession *mgo.Session
 	tracelog.STARTEDf(goRoutine, "CopySession", "UseSession[%s]", useSession)
 
 	// Find the session object
-	session := _This.Sessions[useSession]
+	session := _This.sessions[useSession]
 
 	if session == nil {
 		err = fmt.Errorf("Unable To Locate Session %s", useSession)
@@ -147,7 +147,7 @@ func CopySession(goRoutine string, useSession string) (mongoSession *mgo.Session
 	}
 
 	// Copy the master session
-	mongoSession = session.MongoSession.Copy()
+	mongoSession = session.mongoSession.Copy()
 
 	tracelog.COMPLETED(goRoutine, "CopySession")
 	return mongoSession, err
@@ -165,7 +165,7 @@ func CloneSession(goRoutine string, useSession string) (mongoSession *mgo.Sessio
 	tracelog.STARTEDf(goRoutine, "CloneSession", "UseSession[%s]", useSession)
 
 	// Find the session object
-	session := _This.Sessions[useSession]
+	session := _This.sessions[useSession]
 
 	if session == nil {
 		err = fmt.Errorf("Unable To Locate Session %s", useSession)
@@ -174,7 +174,7 @@ func CloneSession(goRoutine string, useSession string) (mongoSession *mgo.Sessio
 	}
 
 	// Clone the master session
-	mongoSession = session.MongoSession.Clone()
+	mongoSession = session.mongoSession.Clone()
 
 	tracelog.COMPLETED(goRoutine, "CloneSession")
 	return mongoSession, err
