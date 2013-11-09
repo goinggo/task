@@ -44,7 +44,7 @@ func CleanJobs(goRoutine string, useSession string, useDatabase string) (err err
 		tracelog.TRACE(goRoutine, "CleanJobs", "Info : Performing Clean Job : %v", currentTime)
 
 		// Grab a mongo session
-		mongoSession, err := mongo.CloneSession(goRoutine, useSession)
+		mongoSession, err := mongo.CopySession(goRoutine, useSession)
 
 		if err != nil {
 			tracelog.COMPLETED_ERROR(err, goRoutine, "CleanJobs")
@@ -81,7 +81,7 @@ func StartJob(goRoutine string, useSession string, useDatabase string, jobType s
 	tracelog.STARTEDf(goRoutine, "StartJob", "UseSession[%s] UseDatabase[%s] JobType[%s]", useSession, useDatabase, jobType)
 
 	// Grab a mongo session
-	mongoSession, err := mongo.CloneSession(goRoutine, useSession)
+	mongoSession, err := mongo.CopySession(goRoutine, useSession)
 	if err != nil {
 		tracelog.COMPLETED_ERROR(err, goRoutine, "StartJob")
 		return job, err
@@ -121,7 +121,7 @@ func EndJob(goRoutine string, useSession string, useDatabase string, result stri
 	tracelog.STARTEDf(goRoutine, "EndJob", "UseSession[%s] UseDatabase[%s] Id[%v] Result[%s]", useSession, useDatabase, job.ObjectId, result)
 
 	// Grab a mongo session
-	mongoSession, err := mongo.CloneSession(goRoutine, useSession)
+	mongoSession, err := mongo.CopySession(goRoutine, useSession)
 	if err != nil {
 		tracelog.COMPLETED_ERROR(err, goRoutine, "EndJob")
 		return err
@@ -155,7 +155,7 @@ func AddJobDetail(goRoutine string, useSession string, useDatabase string, job *
 	defer helper.CatchPanic(&err, goRoutine, "AddJobDetail")
 
 	// Grab a mongo session
-	mongoSession, err := mongo.CloneSession(goRoutine, useSession)
+	mongoSession, err := mongo.CopySession(goRoutine, useSession)
 	if err != nil {
 		tracelog.COMPLETED_ERROR(err, goRoutine, "AddJobDetail")
 		return err
