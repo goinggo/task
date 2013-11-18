@@ -15,21 +15,26 @@ const (
 	JOBS_COLLECTION = "data_jobs"
 )
 
-//** NEW TYPES
+//** TYPES
 
-type JobDetail struct {
-	Task    string    `bson:"task"`
-	Date    time.Time `bson:"date"`
-	Details string    `bson:"details"`
-}
+type (
+	// JobDetail contains a detail for the job
+	JobDetail struct {
+		Task    string    `bson:"task"`
+		Date    time.Time `bson:"date"`
+		Details string    `bson:"details"`
+	}
 
-// Job contains information about a new processor job
-type Job struct {
-	ObjectId  bson.ObjectId `bson:"_id"`
-	Type      string        `bson:"type"`
-	StartDate time.Time     `bson:"start_date"`
-	Details   []JobDetail   `bson:"details"`
-}
+	// Job contains information about a new processor job
+	Job struct {
+		ObjectId  bson.ObjectId `bson:"_id"`
+		Type      string        `bson:"type"`
+		StartDate time.Time     `bson:"start_date"`
+		Details   []JobDetail   `bson:"details"`
+	}
+)
+
+//** PUBLIC FUNCTIONS
 
 // CleanJobs removes old jobs from the jobs table
 func CleanJobs(goRoutine string, useSession string, useDatabase string) (err error) {

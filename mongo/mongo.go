@@ -19,26 +19,30 @@ import (
 
 //** CONSTANTS
 
-// Constants
 const (
 	MASTER_SESSION = "master"
 )
 
-//** NEW TYPES
+//** PACKAGE VARIABLES
 
-type mongoSession struct {
-	mongoDBDialInfo *mgo.DialInfo // The connection information
-	mongoSession    *mgo.Session  // A master connection
-}
+var (
+	_This *mongoManager // Reference to the singleton
+)
 
-// mongoManager manages a connection and session
-type mongoManager struct {
-	sessions map[string]*mongoSession // Map of available sessions
-}
+//** TYPES
 
-//** SINGLETON REFERENCE
+type (
+	// mongoManager contains dial and session information
+	mongoSession struct {
+		mongoDBDialInfo *mgo.DialInfo
+		mongoSession    *mgo.Session
+	}
 
-var _This *mongoManager // Reference to the singleton
+	// mongoManager manages a map of session
+	mongoManager struct {
+		sessions map[string]*mongoSession
+	}
+)
 
 //** PUBLIC FUNCTIONS
 

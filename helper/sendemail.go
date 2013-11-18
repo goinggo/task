@@ -8,7 +8,7 @@ import (
 	"text/template"
 )
 
-//** GLOBAL VARIABLES
+//** PACKAGE VARIABLES
 
 var (
 	emailTemplate *template.Template // A template for sending emails

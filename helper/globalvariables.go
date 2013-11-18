@@ -1,6 +1,6 @@
 package helper
 
-//** GLOBAL VARIABLES
+//** PACKAGE VARIABLES
 
 var (
 	EmailHost         string // Host address to the email server

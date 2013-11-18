@@ -13,29 +13,31 @@ import (
 
 //** CONSTANTS
 
-// Constants
 const (
 	EmailAlertSubject = "Controller Exception"
 )
 
-//** NEW TYPES
+//** PACKAGE VARIBLES
 
-// controlManager manages the starting and shutting down of the program
-type controlManager struct {
-	shutdown    int32
-	userControl Controller
-}
+var (
+	_This *controlManager
+)
 
-// Controller provides the functionality for the running application
-type Controller interface {
-	StrapEnv() (environment string, path string)
-	Run() (err error)
-}
+//** TYPES
 
-//** SINGLETON REFERENCE
+type (
+	// controlManager manages the starting and shutting down of the program
+	controlManager struct {
+		shutdown    int32
+		userControl Controller
+	}
 
-// Reference to the singleton
-var _This *controlManager
+	// Controller provides the functionality for the running application
+	Controller interface {
+		StrapEnv() (environment string, path string)
+		Run() (err error)
+	}
+)
 
 //** PUBLIC FUNCTIONS
 
