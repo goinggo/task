@@ -141,6 +141,7 @@ func (this *controlManager) start() (err error) {
 	complete := make(chan error)
 	go this.launchProcessor(complete)
 
+ControlLoop:
 	for {
 		select {
 		case <-sigChan:
@@ -156,11 +157,8 @@ func (this *controlManager) start() (err error) {
 
 		case err = <-complete:
 			tracelog.TRACE("main", "start", "******> Task Complete")
-			break
+			break ControlLoop
 		}
-
-		// Break the loop
-		break
 	}
 
 	// Program finished
