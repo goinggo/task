@@ -133,6 +133,9 @@ func (this *controlManager) start() (err error) {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt)
 
+	// Set the timeout channel
+	timeout := time.After(time.Duration(helper.TimeoutSeconds) * time.Second)
+
 	// Launch the process
 	tracelog.TRACE("main", "start", "******> Launch Task")
 	complete := make(chan error)
@@ -147,7 +150,7 @@ func (this *controlManager) start() (err error) {
 			atomic.StoreInt32(&_This.shutdown, 1)
 			continue
 
-		case <-time.After(time.Duration(helper.TimeoutSeconds) * time.Second):
+		case <-timeout:
 			tracelog.ALERT(helper.EmailAlertSubject, "main", "start", "Timeout - Killing Program")
 			os.Exit(1)
 
