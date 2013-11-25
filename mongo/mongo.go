@@ -8,11 +8,13 @@
 package mongo
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/goinggo/straps"
 	"github.com/goinggo/task/helper"
 	"github.com/goinggo/tracelog"
 	"labix.org/v2/mgo"
+	"labix.org/v2/mgo/bson"
 	"strings"
 	"time"
 )
@@ -216,4 +218,13 @@ func CollectionExists(goRoutine string, mongoSession *mgo.Session, useDatabase s
 	}
 
 	return false
+}
+
+// ToString converts the quer map to a string
+func ToString(queryMap bson.M) string {
+	json, err := json.Marshal(queryMap)
+	if err != nil {
+		return ""
+	}
+	return string(json)
 }
