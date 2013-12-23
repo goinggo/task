@@ -51,7 +51,7 @@ func SendEmail(goRoutine string, subject string, message string) (err error) {
 }
 
 // emailScript returns a template for the email message to be sent
-func emailScript() (script string) {
+func emailScript() string {
 	return `From: {{.From}}
 To: {{.To}}
 Subject: {{.Subject}}
