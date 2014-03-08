@@ -83,7 +83,7 @@ func IsShutdown() bool {
 //** MEMBER FUNCTIONS
 
 // init is called to initialize the package
-func (this *controlManager) init() (err error) {
+func (controlManager *controlManager) init() (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("main : init : Init Exceptions: %s\n", r)
@@ -92,7 +92,7 @@ func (this *controlManager) init() (err error) {
 	}()
 
 	// Capture the environment and path for the straps
-	environment, path := this.userControl.StrapEnv()
+	environment, path := controlManager.userControl.StrapEnv()
 
 	if os.Getenv(environment) == "" {
 		log.Fatalf("Environment %s Missing\n", environment)
@@ -124,7 +124,7 @@ func (this *controlManager) init() (err error) {
 }
 
 // start gets the program running
-func (this *controlManager) start() (err error) {
+func (controlManager *controlManager) start() (err error) {
 	defer helper.CatchPanic(&err, "main", "start")
 
 	tracelog.STARTED("main", "start")
@@ -139,7 +139,7 @@ func (this *controlManager) start() (err error) {
 	// Launch the process
 	tracelog.TRACE("main", "start", "******> Launch Task")
 	complete := make(chan error)
-	go this.launchProcessor(complete)
+	go controlManager.launchProcessor(complete)
 
 ControlLoop:
 	for {
@@ -167,7 +167,7 @@ ControlLoop:
 }
 
 // stop releases all resource and prepares the program to terminate
-func (this *controlManager) stop() (err error) {
+func (controlManager *controlManager) stop() (err error) {
 	defer helper.CatchPanic(&err, "main", "stop")
 
 	// shutdown the log system
@@ -177,7 +177,7 @@ func (this *controlManager) stop() (err error) {
 }
 
 // launchProcessor instanciates the specified inventory processor and runs the job
-func (this *controlManager) launchProcessor(complete chan error) {
+func (controlManager *controlManager) launchProcessor(complete chan error) {
 	tracelog.STARTED("launch", "launchProcessor")
 
 	var err error
@@ -188,7 +188,7 @@ func (this *controlManager) launchProcessor(complete chan error) {
 	}()
 
 	// Run the user code
-	err = this.userControl.Run()
+	err = controlManager.userControl.Run()
 
 	tracelog.COMPLETED("launch", "launchProcessor")
 }

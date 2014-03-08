@@ -28,7 +28,7 @@ const (
 //** PACKAGE VARIABLES
 
 var (
-	_This *mongoManager // Reference to the singleton
+	singleton *mongoManager // Reference to the singleton
 )
 
 //** TYPES
@@ -59,7 +59,7 @@ func Startup(goRoutine string) (err error) {
 	tracelog.STARTED(goRoutine, "Startup")
 
 	// Create the Mongo Manager
-	_This = &mongoManager{
+	singleton = &mongoManager{
 		sessions: map[string]*mongoSession{},
 	}
 
@@ -84,7 +84,7 @@ func Shutdown(goRoutine string) (err error) {
 	tracelog.STARTED(goRoutine, "Shutdown")
 
 	// Close the databases
-	for _, session := range _This.sessions {
+	for _, session := range singleton.sessions {
 		CloseSession(goRoutine, session.mongoSession)
 	}
 
@@ -130,7 +130,7 @@ func CreateSession(goRoutine string, sessionName string, hosts []string, databas
 	mongoSession.mongoSession.SetSyncTimeout(10 * time.Second)
 
 	// Add the database to the map
-	_This.sessions[sessionName] = mongoSession
+	singleton.sessions[sessionName] = mongoSession
 
 	tracelog.COMPLETED(goRoutine, "CreateSession")
 	return err
@@ -148,7 +148,7 @@ func CopySession(goRoutine string, useSession string) (mongoSession *mgo.Session
 	tracelog.STARTEDf(goRoutine, "CopySession", "UseSession[%s]", useSession)
 
 	// Find the session object
-	session := _This.sessions[useSession]
+	session := singleton.sessions[useSession]
 
 	if session == nil {
 		err = fmt.Errorf("Unable To Locate Session %s", useSession)
@@ -175,7 +175,7 @@ func CloneSession(goRoutine string, useSession string) (mongoSession *mgo.Sessio
 	tracelog.STARTEDf(goRoutine, "CloneSession", "UseSession[%s]", useSession)
 
 	// Find the session object
-	session := _This.sessions[useSession]
+	session := singleton.sessions[useSession]
 
 	if session == nil {
 		err = fmt.Errorf("Unable To Locate Session %s", useSession)
