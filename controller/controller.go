@@ -152,7 +152,7 @@ ControlLoop:
 			continue
 
 		case <-timeout:
-			tracelog.ALERT(helper.EmailAlertSubject, "main", "start", "Timeout - Killing Program")
+			tracelog.TRACE("main", "start", "Timeout - Killing Program")
 			os.Exit(1)
 
 		case err = <-complete:
