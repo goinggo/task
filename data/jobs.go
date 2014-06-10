@@ -42,10 +42,10 @@ func CleanJobs(goRoutine string, useSession string, useDatabase string) (err err
 
 	tracelog.STARTEDf(goRoutine, "CleanJobs", "UseSession[%s] UseDatabase[%s]", useSession, useDatabase)
 
-	// If it is between 12:00AM - 12:05AM remove old items
+	// If it is between 12:00AM - 12:15AM remove old items
 	currentTime := time.Now().UTC()
 
-	if currentTime.Hour() == 0 && (currentTime.Minute() >= 0 && currentTime.Minute() <= 5) {
+	if currentTime.Hour() == 0 && (currentTime.Minute() >= 0 && currentTime.Minute() <= 15) {
 		tracelog.TRACE(goRoutine, "CleanJobs", "Info : Performing Clean Job : %v", currentTime)
 
 		// Grab a mongo session
