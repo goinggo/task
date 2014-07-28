@@ -16,7 +16,7 @@ func CatchPanic(err *error, goRoutine string, functionName string) {
 		runtime.Stack(buf, false)
 
 		err2 := fmt.Errorf("PANIC Defered [%v] : Stack Trace : %v", r, string(buf))
-		tracelog.ALERT("Unhandled Exception", goRoutine, functionName, err2.Error())
+		tracelog.Alert("Unhandled Exception", goRoutine, functionName, err2.Error())
 
 		if err != nil {
 			*err = err2

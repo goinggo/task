@@ -98,8 +98,10 @@ func (controlManager *controlManager) init() (err error) {
 		log.Fatalf("Environment %s Missing\n", environment)
 	}
 
+	log.Printf("main : init : PATH: %s\n", path)
+
 	// Load the straps file
-	straps.Load(environment, path)
+	straps.MustLoad(environment, path)
 
 	// Capture the global email settings
 	helper.EmailHost = straps.Strap("emailHost")
@@ -113,9 +115,9 @@ func (controlManager *controlManager) init() (err error) {
 	consoleOnly := straps.StrapBool("consoleLogOnly")
 
 	if consoleOnly == true {
-		tracelog.Start(tracelog.LEVEL_TRACE)
+		tracelog.Start(tracelog.LevelTrace)
 	} else {
-		tracelog.StartFile(tracelog.LEVEL_TRACE, straps.Strap("baseFilePath"), straps.StrapInt("daysToKeep"))
+		tracelog.StartFile(tracelog.LevelTrace, straps.Strap("baseFilePath"), straps.StrapInt("daysToKeep"))
 	}
 
 	tracelog.ConfigureEmail(helper.EmailHost, helper.EmailPort, helper.EmailUserName, helper.EmailPassword, []string{helper.EmailTo})
@@ -127,7 +129,7 @@ func (controlManager *controlManager) init() (err error) {
 func (controlManager *controlManager) start() (err error) {
 	defer helper.CatchPanic(&err, "main", "start")
 
-	tracelog.STARTED("main", "start")
+	tracelog.Started("main", "start")
 
 	// Create a channel to talk with the OS
 	sigChan := make(chan os.Signal, 1)
@@ -137,7 +139,7 @@ func (controlManager *controlManager) start() (err error) {
 	timeout := time.After(time.Duration(helper.TimeoutSeconds) * time.Second)
 
 	// Launch the process
-	tracelog.TRACE("main", "start", "******> Launch Task")
+	tracelog.Trace("main", "start", "******> Launch Task")
 	complete := make(chan error)
 	go controlManager.launchProcessor(complete)
 
@@ -145,24 +147,24 @@ ControlLoop:
 	for {
 		select {
 		case <-sigChan:
-			tracelog.ALERT(helper.EmailAlertSubject, "main", "start", "OS INTERRUPT - Program Being Killed")
+			tracelog.Alert(helper.EmailAlertSubject, "main", "start", "OS INTERRUPT - Program Being Killed")
 
 			// Set the flag to indicate the program should shutdown early
 			atomic.StoreInt32(&_This.shutdown, 1)
 			continue
 
 		case <-timeout:
-			tracelog.TRACE("main", "start", "Timeout - Killing Program")
+			tracelog.Trace("main", "start", "Timeout - Killing Program")
 			os.Exit(1)
 
 		case err = <-complete:
-			tracelog.TRACE("main", "start", "******> Task Complete")
+			tracelog.Trace("main", "start", "******> Task Complete")
 			break ControlLoop
 		}
 	}
 
 	// Program finished
-	tracelog.COMPLETED("main", "start")
+	tracelog.Completed("main", "start")
 	return err
 }
 
@@ -178,7 +180,7 @@ func (controlManager *controlManager) stop() (err error) {
 
 // launchProcessor instanciates the specified inventory processor and runs the job
 func (controlManager *controlManager) launchProcessor(complete chan error) {
-	tracelog.STARTED("launch", "launchProcessor")
+	tracelog.Started("launch", "launchProcessor")
 
 	var err error
 
@@ -190,5 +192,5 @@ func (controlManager *controlManager) launchProcessor(complete chan error) {
 	// Run the user code
 	err = controlManager.userControl.Run()
 
-	tracelog.COMPLETED("launch", "launchProcessor")
+	tracelog.Completed("launch", "launchProcessor")
 }

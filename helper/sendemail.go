@@ -16,7 +16,7 @@ var (
 
 // SendEmail will send an email
 func SendEmail(goRoutine string, subject string, message string) (err error) {
-	tracelog.STARTEDf(goRoutine, "SendEmail", "Subject[%s]", subject)
+	tracelog.Startedf(goRoutine, "SendEmail", "Subject[%s]", subject)
 
 	if emailTemplate == nil {
 		emailTemplate = template.Must(template.New("emailTemplate").Parse(emailScript()))
@@ -42,11 +42,11 @@ func SendEmail(goRoutine string, subject string, message string) (err error) {
 	err = smtp.SendMail(fmt.Sprintf("%s:%d", EmailHost, EmailPort), auth, EmailUserName, []string{EmailTo}, emailMessage.Bytes())
 
 	if err != nil {
-		tracelog.COMPLETED_ERROR(err, goRoutine, "SendEmail")
+		tracelog.CompletedError(err, goRoutine, "SendEmail")
 		return err
 	}
 
-	tracelog.COMPLETED(goRoutine, "SendEmail")
+	tracelog.Completed(goRoutine, "SendEmail")
 	return err
 }
 
@@ -63,7 +63,7 @@ Content-Type: text/html; charset="UTF-8"
 
 // SendProblemEmail sends an email with the slice of problems
 func SendProblemEmail(goRoutine string, subject string, problems []string) (err error) {
-	tracelog.STARTED(goRoutine, "SendProblemEmail")
+	tracelog.Started(goRoutine, "SendProblemEmail")
 
 	// Create a buffer to build the message
 	message := new(bytes.Buffer)
@@ -76,6 +76,6 @@ func SendProblemEmail(goRoutine string, subject string, problems []string) (err 
 	// Send the email
 	SendEmail(goRoutine, subject, message.String())
 
-	tracelog.COMPLETED(goRoutine, "SendProblemEmail")
+	tracelog.Completed(goRoutine, "SendProblemEmail")
 	return err
 }
